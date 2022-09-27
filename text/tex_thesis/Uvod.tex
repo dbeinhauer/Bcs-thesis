@@ -1,0 +1,90 @@
+\chapwithtoc{Úvod}
+\label{chap:uvod}
+
+V důsledku zvyšujícího se zájmu společnosti chránit životní 
+prostředí významně roste také snaha mnoha mezinárodních a vládních organizací
+o nahrazení vozidel poháněných spalovácími motory na fosilní paliva za 
+enviromentálně přívětivější varianty \citep{government_2022}.
+V posledních letech se zejména díky výraznému technologickému 
+pokroku v této oblasti jeví jako nejlepší alternativa
+využití elektrických vozidel, jejichž počty v posledních letech násobně rostou 
+\citep{iea_2022}. Zmíněný fenomén je ale také příčinou vyšší poptávky po nabíjecích stanicích, 
+které jsou v určitých oblastech špatně dostupné a jejichž kapacita často není 
+dostatečná.
+
+Problém bohužel nemá jednoduché řešení, protože samotný proces 
+naplánování rozmístění, kapacity a počtu nabíjecích stanic je značně komplexní.
+Během rozmísťování stanic je vyvíjen tlak na minimalizaci počtu stanic a 
+jejich kapacit, protože výstavba nové stanice je logisticky, finančně i časově
+náročná. Zároveň pokud umístíme stanici do málo frekventované oblasti, pak 
+potenciální užitek nabíjecí stanice nebude plně využit. Naopak nedostatečný počet 
+stanic ve značně vytížených oblastech může vézt k vytváření front a nárustu čekací
+doby na stanicích. To je v kombinaci s poměrně značnou časovou náročností nabíjení 
+problematické a pro klienty stanic nepraktické. V neposlední řadě je také 
+potřeba brát v úvahu vzdálenost a s ní související časový deficit způsobený 
+cestou do stanice.
+
+S rostoucím výpočetním výkonem se stále více nabízí řešení tohoto problému s
+využitím celé škály optimalizačních technik, jako jsou například evoluční
+algoritmy, či různé variace algorimů strojového učení. Zmíněné metody ovšem
+často potřebují nějakou formu zpětné vazby, s jejíž pomocí ohodnocují různé
+varianty řešení a volí z nich to nejoptimálnější. K tomuto účelu může dobře
+posloužit vhodně navržený simulátor dopravy, jenž umožňuje analýzu různých
+variant rozmístění nabíjecí stanic.
+
+
+\section*{Cíl a popis práce}
+
+Cílem této práce je navrhnout simulátor dopravy, jenž umožňuje co nejjednodušším
+způsobem pracovat s různými variantami rozvržení nabíjecích stanic a ohodnocovat
+jejich kvalitu. Dalším významným cílem této práce je s pomocí navrženého 
+simulátoru navrhnout a analyzovat optimalizační algoritmy pro rozmístění 
+nabíjecích stanic v dopravní síti.
+
+Návrh simulátoru je založen na snadné manipulaci s různými variantami rozmístění
+nabíjecích stanic. Důraz je kladen především na jednoduchou nastavitelnost 
+počtu a kapacity jednotlivých stanic s ohledem na možné využití různých 
+strategií pro jejich rozmísťování. V neposlední řadě je vyžadován také snadný 
+přístup ke statistickým údajům relevantním k řešenému problému jako je například
+průměrné vytížení stanic, čekací doba na nabití, průměrná doba cestování,
+průměrná hladina nabití vozidel v daných úsecích dopravní infrastruktury a 
+podobně. Na druhou stranu je samotný model provozu v jistých aspektech výrazně 
+zjednodušen především z důvodu výpočetní efektivity simulátoru.
+
+Hlavní význam simulátoru je popisovat především dálkové trasy, u kterých 
+je nejčastější potřeba nabití vozidla během cesty. Zmíněné zaměření na 
+dálkové cesty je motivováno předpokladem, že převážná část majitelů elektrických
+vozidel má možnost své vozidlo dobít v cílové destinaci z vlastního zdroje energie 
+na úroveň dostatečnou pro cesty na krátké vzdálenosti, které tak nejsou 
+relevantní pro řešení našeho problému. Při návrhu je upozaděno řešení dopravních
+situací na úrovni jednotlivých vozidel, jako je například projíždění křižovatek 
+či tvoření dopravních zácp. Samotná simulace je realizována pomocí metody
+diskrétní simulace.
+
+K simulátoru jsou také dodány pomocné skripty pro předpřípravu volně dostupných
+informací o reálné dopravní síti ze serveru Geofabric\footnote{\url{https://download.geofabrik.de/}},
+s jejichž pomocí mohou být tato data převedena do vstupního formátu našeho 
+simulátoru. Zmíněné skripty nejsou nutné pro správné fungování simulátoru. 
+Pokud však chceme simulovat reálnou silniční síť je s ohledem na rozsáhlost dat 
+téměř nerealizovatelná jejich příprava bez použití zmíněných skriptů, či 
+nástroje s odpovídající funkcionalitou. 
+
+V optimalizační části jsou analyzovány 3 optimalizační algoritmy pro nalezení
+optimálního řešení. První tzv. hladový algoritmus hledá optimální řešení 
+heuristicky na základě využití nabíjecích stanic v simulaci, 
+další zvolené metody optimalizace je s využitím technik genetického algoritmu
+a s pomocí algoritmu k-means.
+
+Práce je rozdělena do několika kapitol. První kapitola je zaměřena na popis a definici
+náročnějších pojmů a metod používaných v práci a jsou zde také zmíněny a popsány
+související práce. V druhé kapitole popisujeme
+proces přípravy mapy silniční sítě použité v simulátoru. Třetí kapitola popisuje
+vlastnosti simulátoru. Ve čtvrté kapitole je pak popsán proces simulace dopravy.
+V páté kapitole jsou popsány optimalizační metody použité v této práci. 
+V šesté kapitole jsou popsány výsledky analýzy jednotlivých optimalizačních algoritmů.
+V závěru práce diskutujeme výsledky práce a diskutujeme možnosti pokračování práce.
+V příloze pak nalezneme uživatelskou, programátorskou dokumentaci simulátoru a
+popis přílohy programu.
+
+
+

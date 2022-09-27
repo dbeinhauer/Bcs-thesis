@@ -1,0 +1,65 @@
+\chapwithtoc{Závěr}
+\label{chap:zaver}
+
+V práci jsme navrhli simulátor dopravy speciálně navržen pro snadnou optimalizaci
+rozmístění nabíjecí stanic v dopravní síti. A následně zkoumali několik 
+vybraných variant optimalizace na mapě dopravní sítě České republiky.
+
+Z důvodu vysoké výpočetní náročnosti zkoumaného problému jsme byli nuceni
+některé aspekty simulace značně zjednodušit, což částečně vedlo k 
+nerealističnosti výsledků. Ve značné míře jsme například museli zredukovat 
+simulovanou silniční síť a simulování cest vozidel na krátké vzdálenosti.
+Dalším ze závažných nedostatků simulace je nerealistický počet vozidel,
+kterým se vybije baterie během cesty. Hlavním důvodem tohoto nedostatku
+je potřeba vhodně zadefinovat chybovou funkci pro optimalizaci problému
+(viz. \cref{sec:loss}). Částečně tuto skutečnost způsobuje také velmi
+zjednodušený proces volby nabíjecí stanice vozidlem 
+(viz. \cref{subsec:zajizdeni_na_nabijecku}).
+Tato skutečnost je částečně způsobena nevhodným algoritmem pro volbu nabíjecí
+stanice, jenž musel být podstatně zjednodušen v důsledku potřeby výpočetně
+efektivního simulátoru. Na základě experimentů, které podrobně popisuje 
+kapitola \cref{chap:analysis}, jsme však došli k názoru, že námi navržený 
+simulátor popisuje dostatečně kvalitně aspekty dopravní sítě, jenž jsou 
+potřebné pro optimalizaci rozmístění nabíjecích stanic. 
+
+Po provedení experimentů jsme došli k závěru, že hladový optimalizační
+algoritmus (viz. \cref{sec:greedy}) a především optimalizace pomocí genetického
+algoritmu (viz. \cref{sec:genetic_optim}) vykazují lepší výsledky než náhodný
+přístup, založený na rozmísťování stanic podle počtu obyvatel v jednotlivých
+částech dopravní sítě (např. v genetickém algoritmu se pro 2000 nabíjecích 
+stanic snížil počet vozidel s vybitou baterií v simulaci o $\frac{1}{6}$).
+Především u optimalizace genetickým algoritmem, pozorujeme, že kvalita řešení 
+by se mohla ještě vzrůst při zvýšením počtu generací a velikosti populace.
+Tyto výsledky, jsme však vzhledem k výpočetní náročnosti optimalizace nebyli 
+schopni ověřit. Na druhou stranu optimalizační algoritmus inspirovaný algoritmem
+k-means (\cref{sec:kmeans_optim}) dosahoval dokonce mírně horších výsledků jako
+náhodný přístup. Tuto skutečnost si odůvodňujeme velkou mírou aproximace při 
+hledání vhodné nabíjecí stanice a malým počtem iterací algoritmu v experimentech.
+
+
+\section*{Budoucí práce}
+
+Do budoucna se nabízí doimplementovat do simulátoru vhodnější algoritmus pro 
+výběr nabíjecí stanice, čímž by se mohla zlepšit realističnost chování vozidel
+při jízdě na nabíjecí stanice a výrazně snížit počet vybitých vozidel v 
+simulaci.
+
+Dále se nachází potenciál ve zlepšení optimalizační 
+algoritmu pomocí algoritmu k-means, který pravděpodobně dosahuje špatných výsledků
+z důvodu značné aproximace, s níž algoritmus pracuje. O potenciálu zlepšení jsme
+přesvědčeni, protože \citet{kmeans_layout} dosáhli podobným způsobem kvalitních
+výsledků.
+
+Dalším potenciálním rozšířením simulátoru je doimplementovat potřebné funkcionality
+pro optimalizaci počtu nabíjecích slotů nabíjecích stanic a navržení vhodných
+optimalizačních algoritmů řešící tuto problematiku.
+
+Dále je v simulátoru částečně naimplementována funkcionalita pro načítaní a zápis
+reprezentace nabíjecích stanic do souboru. Dokončení implementace by nám umožnilo
+například optimalizovat již předpřipravené řešení a zkvalitnit tak optimalizaci,
+neboť ve všech akuálně používaných optimalizační algoritmech inicializujeme 
+optimalizaci na náhodně rozmístěných stanicích.
+
+Také se nabízí potenciál v generování výjezdů a tras cest vozidel založených na 
+reálných datech. Čímž bychom mohli zásadně zlepšit realističnost simulovaného
+provozu. 

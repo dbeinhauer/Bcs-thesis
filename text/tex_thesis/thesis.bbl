@@ -1,0 +1,345 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global}
+  \entry{government_2022}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=GU}{%
+         family={Government},
+         familyi={G\bibinitperiod},
+         given={UK},
+         giveni={U\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{GU1}
+    \strng{fullhash}{GU1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{COP26 declaration on accelerating the transition to 100% zero
+  emission cars and Vans}
+    \verb{url}
+    \verb https://www.gov.uk/government/publications/cop26-declaration-zero-emi
+    \verb ssion-cars-and-vans/cop26-declaration-on-accelerating-the-transition-
+    \verb to-100-zero-emission-cars-and-vans#signatories
+    \endverb
+    \field{journaltitle}{GOV.UK}
+    \field{year}{2022}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{iea_2022}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=I}{%
+         family={Iea},
+         familyi={I\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{I1}
+    \strng{fullhash}{I1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Electric cars fend off supply challenges to more than double
+  global sales â€“ analysis}
+    \verb{url}
+    \verb https://www.iea.org/commentaries/electric-cars-fend-off-supply-challe
+    \verb nges-to-more-than-double-global-sales
+    \endverb
+    \field{journaltitle}{IEA}
+    \field{year}{2022}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{chang2008introduction}{book}{}
+    \name{author}{1}{}{%
+      {{hash=CKT}{%
+         family={Chang},
+         familyi={C\bibinitperiod},
+         given={Kang-Tsung},
+         giveni={K\bibinithyphendelim T\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {McGraw-Hill Boston}%
+    }
+    \strng{namehash}{CKT1}
+    \strng{fullhash}{CKT1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Introduction to geographic information systems}
+    \field{volume}{4}
+    \field{year}{2008}
+  \endentry
+
+  \entry{mitchell1998introduction}{book}{}
+    \name{author}{1}{}{%
+      {{hash=MM}{%
+         family={Mitchell},
+         familyi={M\bibinitperiod},
+         given={Melanie},
+         giveni={M\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {MIT press}%
+    }
+    \strng{namehash}{MM1}
+    \strng{fullhash}{MM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{An introduction to genetic algorithms}
+    \field{year}{1998}
+  \endentry
+
+  \entry{macqueen1967classification}{inproceedings}{}
+    \name{author}{1}{}{%
+      {{hash=MJ}{%
+         family={MacQueen},
+         familyi={M\bibinitperiod},
+         given={J},
+         giveni={J},
+      }}%
+    }
+    \strng{namehash}{MJ1}
+    \strng{fullhash}{MJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{5th Berkeley Symp. Math. Statist. Probability}
+    \field{pages}{281\bibrangedash 297}
+    \field{title}{Classification and analysis of multivariate observations}
+    \field{year}{1967}
+  \endentry
+
+  \entry{russell2010artificial}{book}{}
+    \name{author}{1}{}{%
+      {{hash=RSJ}{%
+         family={Russell},
+         familyi={R\bibinitperiod},
+         given={Stuart\bibnamedelima J},
+         giveni={S\bibinitperiod\bibinitdelim J\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Pearson Education, Inc.}%
+    }
+    \strng{namehash}{RSJ1}
+    \strng{fullhash}{RSJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Artificial intelligence a modern approach}
+    \field{year}{2010}
+  \endentry
+
+  \entry{kmeans_layout}{article}{}
+    \name{author}{3}{}{%
+      {{hash=HR}{%
+         family={Hiwatari},
+         familyi={H\bibinitperiod},
+         given={Ryoji},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=IT}{%
+         family={Ikeya},
+         familyi={I\bibinitperiod},
+         given={Tomohiko},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=OK}{%
+         family={Okano},
+         familyi={O\bibinitperiod},
+         given={Kunihiko},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{HRITOK1}
+    \strng{fullhash}{HRITOK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \verb{doi}
+    \verb 10.1109/VPPC.2011.6043186
+    \endverb
+    \field{pages}{1\bibrangedash 6}
+    \field{title}{A road traffic simulator to analyze layout and effectiveness
+  of rapid charging infrastructure for electric vehicle}
+    \field{month}{09}
+    \field{year}{2011}
+  \endentry
+
+  \entry{niccolai2021optimization}{article}{}
+    \name{author}{3}{}{%
+      {{hash=NA}{%
+         family={Niccolai},
+         familyi={N\bibinitperiod},
+         given={Alessandro},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=BL}{%
+         family={Bettini},
+         familyi={B\bibinitperiod},
+         given={Leonardo},
+         giveni={L\bibinitperiod},
+      }}%
+      {{hash=ZR}{%
+         family={Zich},
+         familyi={Z\bibinitperiod},
+         given={Riccardo},
+         giveni={R\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Wiley Online Library}%
+    }
+    \strng{namehash}{NABLZR1}
+    \strng{fullhash}{NABLZR1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{number}{9}
+    \field{pages}{5359\bibrangedash 5383}
+    \field{title}{Optimization of electric vehicles charging station deployment
+  by means of evolutionary algorithms}
+    \field{volume}{36}
+    \field{journaltitle}{International Journal of Intelligent Systems}
+    \field{year}{2021}
+  \endentry
+
+  \entry{zhu2016charging}{article}{}
+    \name{author}{4}{}{%
+      {{hash=ZZH}{%
+         family={Zhu},
+         familyi={Z\bibinitperiod},
+         given={Zhi-Hong},
+         giveni={Z\bibinithyphendelim H\bibinitperiod},
+      }}%
+      {{hash=GZY}{%
+         family={Gao},
+         familyi={G\bibinitperiod},
+         given={Zi-You},
+         giveni={Z\bibinithyphendelim Y\bibinitperiod},
+      }}%
+      {{hash=ZJF}{%
+         family={Zheng},
+         familyi={Z\bibinitperiod},
+         given={Jian-Feng},
+         giveni={J\bibinithyphendelim F\bibinitperiod},
+      }}%
+      {{hash=DHM}{%
+         family={Du},
+         familyi={D\bibinitperiod},
+         given={Hao-Ming},
+         giveni={H\bibinithyphendelim M\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier}%
+    }
+    \strng{namehash}{ZZH+1}
+    \strng{fullhash}{ZZHGZYZJFDHM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{pages}{11\bibrangedash 22}
+    \field{title}{Charging station location problem of plug-in electric
+  vehicles}
+    \field{volume}{52}
+    \field{journaltitle}{Journal of Transport Geography}
+    \field{year}{2016}
+  \endentry
+
+  \entry{kinay2021full}{article}{}
+    \name{author}{3}{}{%
+      {{hash=KOB}{%
+         family={K{\i}nay},
+         familyi={K\bibinitperiod},
+         given={{\"O}mer\bibnamedelima Burak},
+         giveni={{\"O}\bibinitperiod\bibinitdelim B\bibinitperiod},
+      }}%
+      {{hash=GF}{%
+         family={Gzara},
+         familyi={G\bibinitperiod},
+         given={Fatma},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=ASA}{%
+         family={Alumur},
+         familyi={A\bibinitperiod},
+         given={Sibel\bibnamedelima A},
+         giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier}%
+    }
+    \strng{namehash}{KOBGFASA1}
+    \strng{fullhash}{KOBGFASA1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{pages}{1\bibrangedash 22}
+    \field{title}{Full cover charging station location problem with routing}
+    \field{volume}{144}
+    \field{journaltitle}{Transportation Research Part B: Methodological}
+    \field{year}{2021}
+  \endentry
+
+  \entry{matloff2008introduction}{article}{}
+    \name{author}{1}{}{%
+      {{hash=MN}{%
+         family={Matloff},
+         familyi={M\bibinitperiod},
+         given={Norm},
+         giveni={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{MN1}
+    \strng{fullhash}{MN1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{number}{2009}
+    \field{pages}{1\bibrangedash 33}
+    \field{title}{Introduction to discrete-event simulation and the simpy
+  language}
+    \field{volume}{2}
+    \field{journaltitle}{Davis, CA. Dept of Computer Science. University of
+  California at Davis. Retrieved on August}
+    \field{year}{2008}
+  \endentry
+
+  \entry{corob-msft_2022}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=CMÂM}{%
+         family={Corob-Msft},
+         familyi={C\bibinithyphendelim M\bibinitperiod},
+         given={Â©\bibnamedelima Microsoft\bibnamedelima 2022},
+         giveni={Â\bibinitperiod\bibinitdelim M\bibinitperiod\bibinitdelim
+  \bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{CMÂM1}
+    \strng{fullhash}{CMÂM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Use the Microsoft Unit Testing Framework for C++ - Visual
+  Studio (windows)}
+    \verb{url}
+    \verb https://docs.microsoft.com/en-us/visualstudio/test/how-to-use-microso
+    \verb ft-test-framework-for-cpp?view=vs-2019
+    \endverb
+    \field{journaltitle}{Use the Microsoft Unit Testing Framework for C++ -
+  Visual Studio (Windows) | Microsoft Docs}
+    \field{year}{2022}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+\enddatalist
+\endinput

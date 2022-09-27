@@ -1,0 +1,141 @@
+\chapter{Průběh simulace}
+\label{chap:prubeh_simulace}
+
+V této kapitole popisujeme průběh a princip simulace dopravy v simulátoru, jenž
+popisuje \cref{chap:popis_simulatoru}.
+
+Pro simulování dopravy v připravené dopravní síti používáme \emph{diskrétní simulaci}.
+Jedná se o typ simulace, jenž pracuje v tzv. 
+diskrétním čase (skokově). Slouží pro zjednodušení simulace komplexního 
+systému pomocí vhodné abstrakce.
+
+Simulace typicky používá parametry jako je čas (mění se skokově a určuje pořadí
+událostí v simulaci), údálost (změny v systému), fronta (čekání entit na 
+provedení události) a podobně. Příkladem diskrétní simulace může být popis obchodního
+střediska, kde simulujeme příchody a odchody zákazníků, jejich čekání ve frontě 
+u pokladen atd. Více informací o diskrétní simulaci popisuje \citet{matloff2008introduction}.
+
+
+\section{Inicializace simulátoru}
+
+Před prvním spuštěním simulátoru je nejprve potřeba řádně načíst a inicializovat 
+mapu simulace a veškeré její parametry. \Cref{chap:priprava_mapy} popisuje podrobněji
+proces předpřípravy mapy a \cref{chap:popis_simulatoru} definuje podobu simulátoru.
+
+Následně je pak možné opakovaně spouštět simulaci dopravy. Před začátkem každé 
+simulace jsou vždy vynulovány veškeré statistické údaje popisující vlastosti 
+simulovaného prostoru, například informace o průměrném stavu baterie v jednotlivých
+segmentech (z \cref{def:segment_silnice}), o průměrné době čekání na nabíjecích 
+stanicích, počtu vozidel, kterým se vybila baterie a podobně. 
+
+Dále je před každým spuštěním simulace nutné rozmístit nabíjecí stanice do dopravní sítě.
+Ty mohou být rozmístěny buď náhodně, nebo za pomoci zvolené optimalizační metody.
+
+
+\section{Popis simulace}
+
+Dopravní síť simulujeme pomocí diskrétní simulace. Pro správnou 
+funkcionalitu musí simulátor obsahovat časový plán, jenž chronologicky 
+rozvrhuje vykonávání akcí v čase. Především je potřeba definovat všechny
+možné události a jejich důsledky v simulovaném prostoru. 
+V aktuální implementaci pracujeme pouze s jedním typem vozidla, kterým je typ auto
+(viz. \cref{subsec:druhy_vozidel}). Všechny popisované vlastnosti
+simulace se tedy vztahují pouze na tento objekt. 
+
+
+\section{Události simulace}
+Pro správný popis diskrétní simulace musíme zadefinovat vhodné události v simulaci.
+Události v simulaci jsou dány typem události, časem vykonávání a objektem 
+zapojeným do události. S jejich pomocí jsme schopni popsat veškeré jevy v 
+simulovaném prostoru.
+Veškeré události simulace se vážou na konkrétní vozidlo, neboť se jedná o 
+jediný prvek simulace, jenž svým chováním přímo ovlivňuje průběh simulace
+v čase.
+
+Zvolili jsme 6 typů událostí, které vhodně popisují simulované prostředí s ohledem
+na námi řešený optimalizační problém. Mezi tyto události patří výjezd vozidla,
+přesun vozidla po hraně grafu, čekání ve frontě na nabíjení, nabíjení,
+konec nabíjení a čekání auta na návrat.
+
+\subsection{Výjezd vozidla}
+
+Událost \emph{výjezd vozidla} (v simulátoru označován jako \texttt{START}) je 
+jedna ze stěžejních událostí simulace. Během této události je naplánován 
+první pohyb vozidla po silnici v grafu simulátoru (viz. \cref{sec:dopravni_sit})
+a zároveň je zde vygenerováno nové vozidlo a naplánován jeho čas výjezdu, 
+dle pravidel ze \cref{subsec:generovani_vozidel}.
+
+\subsection{Pohyb vozidla}
+\label{subsec:udalost_presunu}
+
+Událost \emph{pohyb vozidla} (\texttt{RUNNING}) po silnici (viz. \cref{def:silnice})
+je s přehledem nejčastější událost v simulaci. V této události je simulován 
+přejezd vozidla po silnici v grafu dopravní sítě simulátoru.
+
+Tato událost reprezentuje přejezd vozidla po části silnice (nikdy nepřesáhne hranice 
+silnice), jenž je spravován samotným vozidlem. S její pomocí je naplánován 
+čas dojezdu vozidla na konec vybraného úseku hran grafu. Na tento čas je také
+naplánována následující událost vozidla. Dále je zde nasimulován přejezd vozidla
+po zvolené posloupnosti hran, vybíjení baterie při přesunu a
+je aktualizována informace o hustotě provozu na silnicích.
+Tato událost je také jedinou příležitostí, kdy se může vozidlo rozhodnout
+změnit svou trasu a vydat se směrem k nejoptimálnější nabíjecí stanici 
+(viz. \cref{subsec:zajizdeni_na_nabijecku}).
+
+Důvod volby pohybu po souvislé části silnice místo po jednotlivých hranách grafu
+je motivován myšlenkou zjednodušené dopravní sítě 
+z \cref{def:zjednodusena_dopravni_site}. Víme totiž, že většina naplánované cesty
+je složena ze silnic (viz. \cref{subsec:hledani_trasy}) 
+a s ohledem na výpočetní výkon je zbytečně náročné 
+simulovat přejezdy po jednotlivých hranách. 
+Nevýhodou této implementace je komplikovanější simulace vybíjení baterie a 
+nemožnost simulovat hustotou provozu na jednotlivých hranách odděleně, čímž simulace 
+ztrácí na realističnosti.
+
+
+\subsection{Události nabíjení vozidla}
+Proces nabíjení vozidla vyžaduje nejvíce událostí pro jeho popsání 
+ze všech procesů v simulaci.
+
+První událostí je \emph{čekání vozidla ve frontě} na nabíjení 
+(\texttt{WAITING\_LINE}), jež vždy nastane při dojezdu vozidla na nabíjecí
+stanici i v případě, že ve stanici je volná nabíječka a není tak potřeba čekat
+v řadě. Během této události je vozidlo zařazeno do fronty příslušné nabíjecí 
+stanice a čeká zde na dobu přiřazení k nějakému nabíjecímu slotu stanice.
+
+V momentě přiřazení slotu se přesune do události \emph{nabíjení vozidla}
+(\texttt{CHARGING}). Ta pokrývá většinu interakce vozidla na 
+nabíjecí stanici. Je zde zvoleno na jakou hladinu baterie bude vozidlo nabito.
+Dále je zde naplánován čas ukončení nabíjení vozidla a je simulováno 
+nabíjení vozidla.
+
+Po uplynutí času potřebného pro nabíjení vozidla následuje 
+událost \emph{konce nabíjení} (ozn. \texttt{END\_CHARGING}).
+V této události je naplánována nová optimální trasa vozidla, kterému je vrácena
+možnost se v budoucnu rozhodnout směřovat k nabíjecí stanici. Je zde také
+naplánováno nabíjení dalšího vozidla čekajícího v řadě.
+
+\subsection{Konec cesty vozidla}
+
+Poslední událostí simulace je čekání vozidla na návrat (\texttt{WAITING\_RETURN}).
+V této událost vozidlo pouze čeká náhodnou dobu z exponenciální distribuce.
+Na dobu ukončení čekání naplánuje následující pohyb vozidla 
+(viz. \cref{subsec:druhy_vozidel}). 
+
+Pokud se již vozidlo vracelo zpět do místa výjezdu, pak je vozidlo řádně
+odstraněno ze simulace. 
+
+Proces návratu je typický pouze pro druh vozidla s názvem auto 
+(viz. \cref{subsec:druhy_vozidel}), protože je ale v naší implementaci
+zahrnut pouze jeden druh vozidla, můžeme tuto vlastnost zobecnit na 
+všechny vozidla.
+
+
+\section{Běh simulace}
+
+Průběh simulace je poměrně přímočaný. Při spuštění je zadána doba simulace a 
+všechny další potřebné parametry a je vygenerováno první vozidlo simulace.
+Následně jsou již pouze chronologicky vykonávány naplánované události do doby
+než je překročena doba simulace, která následně končí. Po skončení lze ze simulace
+získat relevantní informace pro optimalizaci. Případně lze veškeré informace
+vynulovat a spustit novou simulaci.

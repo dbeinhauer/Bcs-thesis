@@ -1,0 +1,663 @@
+\chapter{Popis simulátoru}
+\label{chap:popis_simulatoru}
+
+V této kapitole definujeme řadu důležitých pojmů pro správný popis simulátoru
+a dále popisujeme veškeré vlastnosti a funkcionality simulátoru.
+
+Hlavní cílem návrhu simulátoru je uživatelská přívětivost v rámci analýzy
+různých variant optimalizačních algoritmů. S ohledem na námi řešený problém je 
+kladen důraz především na rozšířitelnost programu o nové optimalizační techniky
+a snadnou nastavitelnost parametrů úzce souvisejících
+s vlastnostmi nabíjecích stanic, mezi něž patří například počet nabíjecích stanic, 
+rozmístění stanic, počet nabíjecích slotů na stanicích a podobně.
+
+\section{Poznámka ke značení a definicím}
+V následujícím textu definujeme řadu objektů simulace, jenž jsou často reprezentovány
+uspořádanou množinou veličin. Často budeme potřebovat specifikovat jednotlivé 
+složky těchto objektů. Pro zjednodušení notace, tak budeme zapisovat parametry
+ve formátu \texttt{objekt.jméno\_parametru}. 
+
+Tedy pokud například definujeme objekt $o$ jako uspořádanou množinu $(x, y, z)$.
+Pak parametr $y$ objektu $o$ zapisujeme ve formátu $o.y$.
+
+Dále je potřeba zmínit, že některé definice uvedené v následujícím textu, jsou
+zjednodušeny a jejich zápis nemusí být matematicky naprosto přesný. 
+Jsou například vynechány nějaké předpoklady z definic, které zřejmě vyplývají z 
+textu. K tomuto kroku bylo přistoupeno pod snahou zpřehlednit jednotlivé definice.
+
+
+\section{Předpoklady návrhu modelu}
+\label{sec:predpoklady_navrhu}
+S ohledem na výpočetní efektivitu simulátoru a uživatelskou přívětivost je potřeba
+náležitě zjednodušit simulovaný model.
+
+Dopravní síť reprezentujeme vhodným grafem rozšířeným o potřebné parametry. Simulátor je
+navržen pro simulaci dopravních sítí pokrývající větší územní celky, které jsou 
+rozlohou a hustotou sítě srovnatelné s dopravní sítí České republiky. Z tohoto
+důvodu není zaručeno vhodné chování simulace na dopravních sítích s výrazně odlišnými
+vlastnostmi.
+
+Při volbě velikosti simulované oblasti jsme předpokládali, že většina majitelů
+vozidel má možnost dobíjet své vozy v počáteční a cílové destinaci (např. mají
+nabíjecí sloty v místě bydliště, či na pracovišti). Pro cesty na krátké vzdálenosti
+tak budou schopni dobít své automobily na dostatečnou hladinu baterie a během cesty
+nebude potřeba použít nabíjecí stanici. 
+
+Na základě tohoto předpokladu je kladen důraz především na realistické simulování
+dálkových tras vozidel. V zájmu výpočetní efektivity simulátoru a zkoumaného problému
+opomíjíme většinu cest na krátkou vzdálenost a naopak nadhodnocujeme počet dálkových
+tras vozidel. V simulátoru je nastavitelná střední hodnota vzdálenosti trasy, čímž
+můžeme míru tohoto předpokladu náležitě regulovat.
+
+Důsledkem zjednodušení je v simulaci zanedbána část vlastností reálné 
+dopravní sítě. Například hustota provozu či skutečnost, že v reálném 
+případě budou nabíjecí stanici využívat také řidiči jedoucí na krátké 
+vzdálenosti tak nebude v simulaci dostatečně zahrnuta.
+
+Protože je v reálném případě dopravní síť značně komplexní (především na 
+úrovni silnic nižší třídy), je potřeba síť řádně zjednodušit. Tato problematika
+je podrobněji popsána v kapitole o přípravě mapy viz. \cref{chap:priprava_mapy}.
+
+
+\section{Dopravní síť}
+\label{sec:dopravni_sit}
+
+Řada myšlenek použitých pro definici modelu silniční sítě je inspirována 
+návrhem modelu v práci \citet{kmeans_layout}.
+
+Dopravní síť je v zájmu efektivity a jednoduchosti simulace reprezentována
+vhodným grafem. K popisu grafu potřebujeme nejprve zadefinovat několik 
+pomocných pojmů a objektů simulátoru.
+
+Prvním pojmem je \emph{křižovatka}, jež zastupuje podmnožinu vrcholů v 
+grafu silniční sítě, které reprezentují křižovatky v reálné silniční síti.
+
+\begin{defn}[Křižovatka]\label{def:krizovatka}
+    \emph{Křižovatka} je uspořádaná čtveřice $(n, c, m, d)$, kde:
+    \begin{itemize}
+        \item $n \in \mathbb{N}_0$ - identifikátor
+        \item $c \in \mathbb{R}^2$ - zeměpisné souřadnice (viz. \cref{sect:zem_souradnice})
+        \item $m \in \mathbb{N}_0$  - identifikátor nejbližšího města od křižovatky
+        \item $d \in \mathbb{R}$ - vzdálenost vrcholu od středu města s 
+        identifikátorem $m$
+    \end{itemize}
+\end{defn} 
+
+Dále definujme \emph{typy silnice} používané simulátorem, s jejichž pomocí můžeme v
+simulaci dopravy rozlišovat mezi různými kapacitami jednotlivých úseků dopravní sítě
+(např. dálnice typicky efektivněji pokryjí hustý provoz než silnice 1. třídy).
+
+\begin{defn}[Množina typů silnice]\label{def:mnoz_typu_silnice}
+    \emph{Množina typů silnice} je množina $\{m, t, p, o\}$ všech typů 
+    silnice používaných v simulaci dopravní sítě, kde:
+    \begin{itemize}
+        \item $m$ - dálnice
+        \item $t$ - silnice pro motorová vozidla
+        \item $p$ - silnice 1. třídy
+        \item $o$ - ostatní typy silnic
+    \end{itemize}
+\end{defn}
+
+\emph{Segmenty silnic} reprezentují vybrané body v silniční síti. A slouží jako
+vrcholy grafu.
+
+\begin{defn}[Segment silnice]\label{def:segment_silnice}
+    \emph{Segment silnice} je uspořádaná dvojice $(n, b)$, kde:
+    \begin{itemize}
+        \item $n \in \mathbb{N}_0$ - identifikátor segmentu (určuje přesnou pozici)
+        \item $b \in [0, 1]$ - průměrná hladina baterie vozidel v místě segmentu
+    \end{itemize}
+\end{defn}
+
+\emph{Silnice} reprezentuje část silniční sítě mezi 2 křižovatkami, jenž neprochází
+žádnou křižovatkou. Tento objekt shlukuje všechny segmenty silnice mezi dvojicemi
+křižovatek.
+
+\begin{defn}[Silnice]\label{def:silnice}
+    Nechť $K$ značí množinu všech křižovatek v silniční síti a
+    $T$ značí množinu typů silnic. Zároveň předpokládejme, že $k_1 < k_2$,  
+    
+    Pak \emph{silnice nad množinou křižovatek $K$} je uspořádaná
+    pětice $(k_1, k_2, d, t, S)$, kde:
+    \begin{itemize}
+        \item $k_1, k_2 \in K$ - křižovatky na koncích silnice 
+        \item $d \in \mathbb{R}^+$ - délka segmentu silnice
+        \item $t \in T$ - typ
+        \item $S$ - množina segmentů silnice, pro kterou je splněna podmínka: 
+        $$(\forall{s, r} \in \mathbb{N}; r < s)(s \in S \implies r \in S)$$
+    \end{itemize}
+\end{defn}
+
+Nyní již můžeme zadefinovat \emph{graf dopravní sítě}, s nímž pracujeme v naší simulaci
+dopravy.
+
+\begin{defn}[Graf dopravní sítě]\label{def:graf_site}
+    Mějme množinu křižovatek $K$, množinu silnic $R$ nad množinou 
+    křižovatek $K$ a $d \in \mathbb{R}$, pro které jsou splněny podmínky:
+    \begin{enumerate}
+        \item $$(\forall r_1, r_2 \in R; r_1 \neq r_2)\left(|r_1.S \cap r_2.S| \leq 1\right)$$
+        \item $$(\forall r_1, r_2 \in R)\left(\{r_1.k_1, r_1.k_2\} 
+            \cap \{r_2.k_1, r_2.k_2\} = \emptyset 
+            \implies r_1.S \cap r_2.S = \emptyset \right)$$
+        \item $$(\forall r \in R)(r.d = d)$$
+    \end{enumerate}
+    
+    Definujme množinu segmentů všech silnic z $R$:
+        $$V = \bigcup_{r \in R} r.S$$
+    Následně definujme množinu sousedních dvojic segmentů silnice $r \in R$ jako:
+        $$E_r = \{(s_1, s_2) \in (r.S)^2; |s_1.n - s_2.n| = 1\}$$
+    A množinu sousedních dvojic segmentů všech silnic z $R$ jako:
+        $$E = \bigcup_{r \in R} E_r$$
+
+    Pak \emph{graf dopravní sítě} $G=(V, E)$ je uniformně ohodnocený souvislý 
+    graf s vrcholy $V$ a hranami $E$ délky $d$.
+\end{defn}
+
+\section{Objekty dopravní sítě}
+
+\subsection{Segmenty}
+Segmenty silnice z \cref{def:segment_silnice} jsou nejmenší stavební jednotkou
+celého simulátoru. Reprezentují vrcholy grafu silniční sítě a slouží k 
+diskretizaci reálné silniční sítě, která je s jejich pomocí rozdělena 
+na uniformně dlouhé úseky. Uchovává informaci o průměrné hladině baterie
+v jednotlivých usecích dopravní sítě, která je využívána v optimalizaci.
+
+
+\subsection{Křižovatky}
+Křižovatky z \cref{def:krizovatka} zastupují podmnožinu vrcholů grafů
+sítě, stupně vyššího než 2. Společně s městy se jedná o jediné objekty 
+simulátoru, jenž si uchovávají zeměpisnou polohu v reálné dopravní síti.
+
+Za pomocí těchto objektů jsou v simulátoru významným způsobem optimalizovány
+algoritmy pro grafové hledání optimální cesty. Jsou používány k redukci vrcholů
+a hran prohledávaného grafu, k heuristickému prohledávání stavového prostoru
+při hledání nejkratších cest, či vhodných nabíjecích stanic. Jsou také hojně
+používány v optimalizačních algoritmech pro rozmístění nabíjecích stanic.
+
+
+\subsection{Silnice}
+
+Silnice z \cref{def:silnice} sdružují podmnožinu hran grafu ležící mezi
+2 křižovatkami a neprocházející jinou křižovatkou. Jsou potřebné pro 
+zadefinování hran grafu simulátoru. Uchovávají informaci
+o typu silnice, jsou používány pro hledání nejkratší cesty v grafu a jsou 
+používány k simulování hustoty provozu v různých částech dopravní sítě.
+
+V simulátoru předpokládáme, že délky všech silnic dopravní sítě jsou 
+dělitelné délkou segmentu. To však v reálném případě typicky nenastane. V 
+popisu reálné silniční sítě pracujeme pouze s přibližnou délkou jednotlivých
+silnic. Tato skutečnost však výrazně neovlivňuje námi požadované vlastnosti
+simulace.
+
+\subsubsection{Hustota provozu}
+Silnice je používána pro simulování hustoty provozu v jednotlivých úsecích dopravní
+sítě. V simulátoru je zaimplementována jednoduchá logika pracující s hustotou
+provozu v závislosti na typu (viz. \cref{def:mnoz_typu_silnice}) a délce 
+silnice.
+
+Princip simulování hustoty provozu je založen myšlence \emph{kapacity silnice}.
+
+\begin{defn}[Kapacita silnice]\label{def:kapacita_silnice}
+    Mějme $d$ délku hran grafu dopravní sítě $G$ z \cref{def:graf_site}.
+    Nechť $R$ je množina silnic $G$. Dále $f:T \to \mathbb{R}$, kde $T$ je 
+    množina všech typů silnic z \cref{def:silnice} a $\alpha, \beta \in \mathbb{R}$.
+
+    \emph{Kapacita silnice} je funkce $c:R \to \mathbb{R}^+$, definována jako:
+        $$c(r) := \alpha \cdot f(r.t) + \beta \cdot d \cdot |r.S|$$
+\end{defn}
+
+V simulátoru byly hodnoty $\alpha, \beta$ zvoleny na základě empirické volby. 
+Simulování hustoty provozu je pak odvozeno od aktuálního počtu vozidel na 
+silnici. Pomocí jednoduché funkce \emph{relativní délky silnice}.
+ 
+\begin{defn}[Relativní délka silnice]\label{def:relativni_delka_silnice}
+    Mějme $d$ délku hran grafu dopravní sítě $G$. Silnici $r$ grafu $G$,
+    jejíž kapacita je $c_r \in \mathbb{R}^+$ a 
+    nechť $n_r \in \mathbb{N}_0$ je aktuální počet vozidel na 
+    silnici $r$. Dále funkce zpoždění vozidla $f:\mathbb{R} \to \mathbb{R}^+$.
+
+    \emph{Relativní délka silnice} $r$ je definována, jako 
+    $t_r:\mathbb{R}^+ \times \mathbb{N}_0 \to \mathbb{R}^+$, kde:
+    $$
+        t_{r}(n_r) =
+          \begin{cases}
+            |r.S| & pro\ n_r \leq c_r \\
+            |r.S| \cdot f(n_r - c_r) & pro\ n_r > c_r
+          \end{cases}       
+    $$
+\end{defn}
+
+Doba průjezdu vozidla po silnici se pak vypočítá jako doba potřebná pro ujetí
+vzdálenosti $d$, která je rovna relativní délce silnice, vozidlem s pevně
+zvolenou průměrnou rychlostí $v$ (danou parametry simulátoru). Simulátor 
+vždy aktualizuje hodnotu relativní délky silnice po změně počtu vozidel 
+na silnici.
+
+
+\subsection{Města}
+Důležitým prvkem simulátoru je zakomponování vlivu zalidnění simulovaných oblastí.
+K tomuto účelu nám slouží objekt \emph{město}.
+
+\begin{defn}[Město]\label{def:mesto}
+    \emph{Město} je uspořádaná trojice $(n, c, p)$, kde:
+    \begin{itemize}
+        \item $n \in \mathbb{N}_0$ - identifikátor
+        \item $c \in \mathbb{R}^2$ - zeměpisné souřadnice centra města 
+        (viz. \cref{sect:zem_souradnice})
+        \item $p \in \mathbb{N}_0$ - počet obyvatel města
+    \end{itemize}
+\end{defn}
+
+Každému městu náleží příslušná množina křižovatek definována jako:
+
+\begin{defn}[Množina křižovatek města]\label{def:krizovatky_mesta}
+    Mějme město $m$ v simulátoru a množinu všech křižovatek $K$ grafu $G$,
+    pak \emph{množina křižovatek města} je:
+    $$K_m = \{k \in K| k.m = m.n\}$$ 
+\end{defn}
+
+Koncept měst je důležitý pro realističtější generování počátečních
+a koncových pozic vozidel v simulaci. Slouží také pro heuristický
+výběr vhodné nabíjecí stanice pro nabití vozu.
+
+
+\subsection{Nabíjecí stanice}
+\emph{Nabíjecí stanice} jsou vzhledem ke zkoumanému problému důležitým 
+prvkem simulátoru.
+
+\begin{defn}[Nabíjecí stanice]\label{def:nabijeci_stanice}
+    \emph{Nabíjecí stanice} v grafu dopravní sítě $G=(V, E)$ je uspořádaná 
+    čtveřice $(n, m, v, c)$, kde:
+    \begin{itemize}
+        \item $n \in \mathbb{N}_0$ - identifikátor
+        \item $m \in \mathbb{N}_0$ - identifikátor nejbližšího města od stanice
+        \item $v \in V$ - pozice stanice (vrchol v grafu dopravní sítě)
+        \item $c \in \mathbb{N}$ - kapacita stanice (počet zákazníků, 
+        jež stanice pokryje najednou)
+    \end{itemize}
+\end{defn}
+
+Informace o nejbližším městě je důležitá především pro heuristickou volbu 
+nabíjecí stanice vozidlem v simulaci. V simulátoru je uchovávána informace
+o aktuálním vytížení stanice a o vozidlech čekajících na volný nabíjecí slot pro 
+simulování čekání automobilů ve frontě. Simulátor si pro každou nabíjecí 
+stanici pamatuje průměrnou hladinu baterie vozidel při příjezdu do stanice,
+pro použití v optimalizačních algoritmech. 
+V návrhu simulátoru předpokládáme, že zákazníci stanice dobíjejí své vozidlo 
+na plnou kapacitu baterie. Návrh simulátoru však umožňuje rozšíření o 
+nabíjení pouze na zvolenou hladinu baterie bez významnějších zásahů do původní
+implementace.
+
+
+\section{Vozidla}
+\label{sec:vozidla}
+
+\emph{Vozidla} jsou nejdůležitějším prvkem simulace. Jednotlivá vozidla jsou 
+simulátorem spravována samostatně. Každému vozidlu je při generování přiřazena
+počáteční a cílová pozice a počáteční hladina baterie.
+
+
+\subsection{Generování vozidel}
+\label{subsec:generovani_vozidel}
+
+Vozidla jsou v simulaci generována, aby co nejlépe aproximovala reálný provoz
+vozidel. Doba čekání mezi výjezdy vozidel je náhodně generována z exponenciální
+distribuce s nastavitelnými parametry. Počáteční hladina baterie vozidla je 
+vygenerována z normálního rozdělení s pevně zvolenými parametry. Definujeme
+také horní a dolní hranici hladiny počáteční baterie. Pokud vygenerovaná
+hladina překračuje jednu z těchto hranic, pak je nahrazena hodnotou
+překročené hranice.
+Tento krok slouží jako ochrana pro vygenerování hladiny baterie pouze
+v rozmezí $[0, 1]$.
+
+
+Počáteční i cílová pozice vozidla je generována několikafázově z kombinace 
+více náhodných distribucí. 
+
+Při generování pozice výjezdu je nejprve generováno město $m_1$ výjezdu s 
+pravděpodobností úměrnou jeho počtu obyvatel (čím více obyvatel, tím je 
+výjezd vozidla pravděpodobnější). Tedy:
+
+\begin{defn}[Pravděpodobnost výjezdu z města]\label{def:pravdepodobnost_mesta}
+    Zvolme množinu $M$ všech měst v simulátoru. Pak 
+    \emph{pravděpodobnost výjezdu} vozidla z města $m \in M$, je rovna:
+        $$p_m = \frac{m.p}{\sum_{m_i \in M} m_i.p}$$
+\end{defn}
+
+Po vygenerování počátečního města $m_1$ je uniformně náhodně zvolena 
+křižovatka $k_1$ z množiny křižovatek města $m_1$ 
+(viz. \cref{def:krizovatky_mesta}). Následně je uniformně náhodně vybrána
+silnice $r_1$ napojená na křižovatku $k_1$. Neboli silnice $r_1$, pro kterou
+platí $ k_1 \in \{r_1.k_1, r_1.k_2\}$. Nakonec je uniformně náhodně zvolen
+segment $v_1$ (vrchol grafu silniční sítě) silnice $r_1$, který již jednoznačně
+popisuje pozici výjezdu vozidla. 
+
+Generování cílové pozice vozidel je realizováno podobně s rozdílem generování 
+koncového města. Při náhodném výběru koncového města je pravděpodobnost
+výběru města ovlivněna počtem obyvatel města a vzdáleností od počátečního města.
+
+Proces generování cílového města probíhá následovně. Nejprve je spočítána 
+pravděpodobnost výjezdu vozidla pro všechna města v simulátoru 
+(viz. \cref{def:pravdepodobnost_mesta}). Dále je pro počáteční město $m_1$
+a každé město $m_i \in M$ simulátoru vypočítána jejich geografická vzdálenost
+(viz. \cref{sect:zem_souradnice}), kterou označíme jako $d_{1,i}$. 
+Následně pro všechna města $m_i \in M$ vypočítáme pravděpodobnost vzdálenosti $d_{1,i}$,
+kterou si označíme $p_{1,i}$. Pravděpodobnost vzdálenosti $p_{1,i}$ vypočítáme
+s pomocí nastavitelné exponenciální distribuce popisující vzdálenost cílové
+pozice od počáteční pozice. Pravděpodobnost cílového města $m_2 \in M$
+vůči počátečnímu městu $m_1 \in M$ spočítáme následovně:
+
+\begin{defn}[Pravděpodobnost cílového města]\label{def:pravdepodobnost_ciloveho_mesta}
+    Mějme $\alpha \in \mathbb{R}^+$ a počáteční město $m_1 \in M$. Označme vzdálenost 
+    města $m_1$ od města $m_2 \in M$ jako $d_{m_1,m_2} \in \mathbb{R}$. 
+    Označme pravděpodobnost
+    výjezdu z města $m_2$ jako $p_{m_2}$ a pravděpodobnost vzdálenosti $d_{m_1,m_2}$ jako
+    $p_{m_1,m_2}$, kterou dostaneme z námi zvolené exponenciální distribuce 
+    (stejná notace platí pro libovolné město $m_i \in M$).
+    Pak pravděpodobnost $p_{m_1,m_{2_{final}}}$, že město $m_2$ je cílovým městem
+    vozidla s počátkem ve městě $m_1$ je rovna:
+        $$p_{m_1,m_{2_{final}}} = 
+            \frac{p_{m_2} + \alpha \cdot p_{m_1,m_2}}
+            {\sum_{m_i \in M} p_{m_i} + \alpha \cdot p_{m_1,m_i}}$$
+\end{defn}
+
+Cílové město $m_2 \in M$ vygenerujeme z distribuce měst dané pravděpodobnostmi
+cílového města vůči počátečními městu $m_1$ (viz. \cref{def:pravdepodobnost_ciloveho_mesta}).
+Proces generování přesné cílové pozice ve městě $m_2$ je totožný s procesem 
+generování přesné počáteční pozice ve zvoleném městě $m \in M$.
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Generování náhodné pozice}{$m$ - město}
+    \State Uniformně náhodně vygeneruj křižovatku $k$ ve městě $m$.
+    \State Uniformně náhodně vygeneruj silnici $r$ napojenou na křižovatku $k$.
+    \State Uniformně náhodně vygeneruj segment $v$ na silnici $r$.
+    \State \Return $v$
+\EndFunction
+\end{algorithmic}
+\caption{Postup při náhodném generování pozice ve městě (vrcholu v grafu).}
+\label{alg:generovani_pozice_ve_meste}
+\end{algorithm}
+
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Generování vozidla}{}
+    \State Z normálního rozdělení vygeneruj počáteční hladinu baterie $b$.
+    \State V závislosti na počtu obyvatel náhodně vygeneruj počáteční město $m_1$.
+    \State $v_1 \gets$ \Call{Generování náhodné pozice}{$m_1$}
+    \State V závislosti na počtu obyvatel a vzdálenosti of města $m_1$ náhodně vygeneruj
+    koncové město $m_2$
+    \State $v_2 \gets$ \Call{Generování náhodné pozice}{$m_2$} 
+    \State Z exponenciální distribuce vygeneruj čas $t$ čekání na výjezd vozidla.
+    \State $vehicle \gets$ vozidlo s počáteční hladinou baterie $b$, 
+    počátečním vrcholem $v_1$ a cílovým vrcholem $v_2$.
+    \State \Return $vehicle$, $t$ \Comment vygenerovené vozidlo a čas čekání na jeho výjezd.
+
+\EndFunction
+\end{algorithmic}
+\caption{Pseudokód procesu generování nového vozidla v simulaci.}
+\label{alg:generovani_vozidla}
+\end{algorithm}
+
+
+\subsection{Hledání trasy vozidla}
+\label{subsec:hledani_trasy}
+
+Po vygenerování vozidla musíme v simulátoru vyřešit také otázku naplánování
+trasy vozidla, které je realizováno algoritmem A-star (viz. \cref{sec:a_star}),
+který jako heuristickou funkci volí zeměpisnou vzdálenost 
+(viz. \cref{sect:zem_souradnice}) mezi křižovatkami.
+
+S ohledem na efektivitu výpočtu pracujeme v simulaci při hledání cesty
+se \emph{zjednodušeným grafem dopravní sítě} vůči počátečnímu vrcholu 
+$v_1$ a cílovému vrcholu $v_2$.
+
+\begin{defn}[Zjednodušený graf dopravní sítě]\label{def:zjednodusena_dopravni_site}
+    Mějme graf dopravní sítě $G=(V, E)$ (viz. \cref{def:graf_site}) s množinou
+    křižovatek $K$ a množinou silnic v síti $R$. Zvolme počáteční $v_1 \in V$ 
+    a koncový vrchol $v_2 \in V$ a silnice $r_1 \in R$, resp. $r_2 \in R$, 
+    t.ž. $v_1 \in r_1.S$, resp. $v_2 \in r_2.S$. 
+
+    \emph{Zjednodušený graf dopravní sítě} vůči počátečnímu vrcholu $v_1$ a koncovému
+    vrcholu $v_2$ je graf $H=(V', E')$, kde:
+    \begin{itemize}
+        \item $V' = K \cup r_1.S \cup r_2.S$
+        \item $E' = (R \setminus \{r_1, r_2\}) \cup \{$hrany na silnicích $r_1$ a $r_2\}$
+    \end{itemize}
+\end{defn}
+
+Zjednodušený graf dopravní sítě vůči počátečnímu vrcholu $v_1$ a cílovému vrcholu $v_2$
+(viz. \cref{def:zjednodusena_dopravni_site}), je tedy graf, jehož vrcholy jsou křižovatky a
+hrany jsou silnice, s vyjímkou počáteční a koncové silnice, jejichž reprezentace je
+ponechána z původní \cref{def:graf_site} grafu dopravní sítě.
+
+Postup plánování trasy vozidla je pak následující. Zvolíme vhodný zjednodušený graf dopravní
+sítě a hrany grafu ohodnotíme relativní délkou silnice 
+(viz. \cref{def:relativni_delka_silnice}), v případě počáteční a koncové silnice tuto
+hodnotu náležitě rozdělíme mezi jednotlivé hrany na silnici. Následně na tomto grafu 
+spustíme algoritmus A-star pro nalezení nejkratší cesty mezi vrcholy $v_1$ a $v_2$ s
+ohledem na aktuální provoz v dopravní síti.
+
+Algoritmus A-star používá jako heuristickou funkci zeměpisnou vzdálenost křižovatek. 
+Neumíme však efektivně vypočítat tuto vzdálenost pro segmenty 
+(viz. \cref{def:segment_silnice}). Při hledání nejkratší cesty se tedy omezujeme
+pouze na hledání cest mezi nejbližšími křižovatkami počátečního a koncového vrcholu.
+Výslednou cestu následně dostaneme řádným rozšířením cesty z počátečního a koncového
+vrcholu do jejich nejbližších křižovatek. Vyjímkou je cesta uvnitř jedné silnice, kterou
+nalezneme triviálně.
+
+Vzhledem k výpočetní náročnosti hledání optimální cesty vozidla, hledáme tuto cestu
+pouze při vygenerování vozidla, či ve speciálních případech, jako je například
+plánování cesty na nabíjecí stanici, nebo cesty z nabíjecí stanice.
+
+
+\subsection{Zajíždění na nabíjecí stanici}
+\label{subsec:zajizdeni_na_nabijecku}
+
+Speciální situace nastává v moment, kdy vozidlo potřebuje navštívit nabíjecí stanici.
+V tomto případě je naplánována cesta z počáteční pozice do heuristicky zvolené
+nabíjecí stanice postupem popsaným v části \cref{subsec:hledani_trasy}.
+Po řádném nabití vozidla je pak stejným způsobem nalezena cesta ze stanice do
+cílové pozice.
+
+\subsubsection{Rozhodnutí o zajetí na nabíjecí stanici}
+
+Každé vozidlo má možnost na základě aktuální hladiny baterie aktualizovat 
+svou trasu tak, aby směřovala k nejbližší nabíjecí stanici. 
+Z důvodu výpočetní náročnosti přepočítání trasy, může ale každé vozidlo
+využít této možnosti pouze jednou. Po zajetí vozidla na nabíjecí stanici je mu
+však tato možnost znovu přidělena.
+
+Jelikož každé vozidlo může pozměnit svou trasu pouze jednou, je důležité zvolit
+vhodný okamžik přeplánování trasy. Tento okamžik naplánujeme pomocí vhodně 
+nastavitelného normálního rozdělení, ze kterého vygenerujeme hladinu baterie,
+při které se v budoucnu rozhodneme zda zamíříme na nabíjecí stanici, či ne.
+
+Volby okamžiku rozhodování s pomocí normálního rozdělení je motivován následujícími
+myšlenkami. Nechceme vyrazit ani plánovat cestu na nabíjecí stanici moc brzy, neboť se 
+může v průběhu cesty podstatně změnit hustota provozu a naplánovaná cesta
+tedy nebude optimální. Zároveň je cesta na nabíjecí stanici při dostatečně vysoké 
+hladině baterie zbytečná z důvodu malé kapacity baterie, kterou je možno doplnit.
+Naopak v případě velmi nízké hladiny baterie, při níž aktualizujeme cestu, můžeme
+narazit na problém, že vozidlo nedojede na nabíjecí stanici před úplným vybitím baterie.
+
+Zda vozidlo v moment aktualizace cesty vyrazí na nabíjecí stanici, rozhodneme
+na základě očekávané hladiny baterie vozidla v cílové destinaci, kterou vypočítáme
+z aktuální hustoty provozu a spotřeby vozidla. V simulátoru je nastavitelná 
+nejnižší očekávaná cílová hladina baterie, pro kterou vozidlo ještě nemění svou trasu,
+tak aby směřovalo na nabíjecí stanici.
+
+
+\subsubsection{Výběr nabíjecí stanice}
+
+Vozidlo se musí v okamžiku rozhodnutí vyrazit na nabíjecí stanici rozhodnout,
+kterou stanici zvolit. Toto rozhodnutí je realizováno heuristicky. 
+
+Postup výběru stanice probíhá následovně. Pro každé město (viz. \cref{def:mesto})
+je na začátku simulace nalezen námi zvolený počet očekávaných nejbližších 
+nabíjecích stanic. Množinu těchto stanic pro libovolné město $m$ označíme 
+jako $C_m$. 
+
+Postup heuristického výběru nejbližších stanic města je následující. Pro každou stanici
+$c$ zvolíme její nejbližší křižovatku $k$ (viz. \cref{def:krizovatka}) a město $m_k$,
+do nějž křižovatka $k$ náleží (viz. \cref{def:krizovatky_mesta}). 
+Vzdálenost stanice $c$ od libovolného města $m$ pak spočítáme jako součet $k.d$ a
+zeměpisné vzdálenosti (viz. \cref{sect:zem_souradnice}) měst $m$ a $m_k$.
+
+Následně pak v závislosti na městu $m$, kterému náleží křižovatka $k$,
+která je nejblíže od aktuální pozice vozidla, zvolíme kandidáty na vhodné 
+nabíjecí stanice pro zvolené vozidlo. Tito kandidáti jsou právě stanice 
+$C_m$. Pro každého kandidáta $c \in C_m$ následně vypočítáme s pomocí relativních délek 
+silnic (viz. \cref{def:relativni_delka_silnice}) očekávanou dobu cesty 
+(délka cesty v grafu relativních délek) $d_c$ vedoucí z aktuální pozice přes
+nabíjecí stanici $c$ do cílové pozice.
+Zvolená nabíjecí stanice $c_{min} \in C_m$, je taková, 
+že $d_{c_{min}}$ je nejmenší ze všech stanic z $C_m$.
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Výběr nabíjecí stanice}{\newline$v_{start}$ - aktuální pozice vozidla,\newline
+    $v_{end}$ - cílová pozice vozidla,\newline
+    $C_{closest}$ - množina množin nejbližších stanic každého města}
+    \State $k \gets$ Nejbližší křižovatka od $v_{start}$.
+    \State $C_{closest_m} \gets$ Množina z $C_{closest}$ náležící městu s ID $k.m$
+    \State $d_{min} \gets 0$ \Comment Nejkratší očekávaná doba cesty.
+    \State $c_{min}$ \Comment Aktuálně nejlepší stanice pro výběr. 
+    \ForAll{$c \in C_{closest_m}$}
+        \State $d_{in} \gets$ \Call{A-star}{$v_{start}$, $c.v$} 
+            \Comment Očekávaná doba cesty do stanice.
+        \State $d_{out} \gets$ \Call{A-star}{$c.v$, $v_{end}$}
+            \Comment Očekávaná doba cesty ze stanice do cíle.
+        \If{$d_{in} + d_{out} < d_{min}$ nebo $c_{min}$ není definováno}
+            \State $c_{min} \gets c$ \Comment Aktualizace nejlepší stanice.
+            \State $d_{min} \gets d_{in} + d_{out}$
+        \EndIf
+    \EndFor
+    \State \Return c \Comment Předej vybranou nabíjecí stanici.
+\EndFunction
+\end{algorithmic}
+\caption{Proces výběru nabíjecí stanice vozidlem.}
+\label{alg:vyber_stanice}
+\end{algorithm}
+
+Tento zjednodušený přístup hledání vhodné nabíjecí stanice podstatně zefektivňuje
+simulaci. Neboť výpočetně nejnáročnější operací celé simulace je hledání nejkratších
+cest v grafu. Omezením výběru stanic rychlost simulace výrazně vzroste. 
+
+
+\subsubsection{Nakládání s vybitými vozidly}
+
+Simulátor musí řešit také případy, kdy se vozidlům vybije baterie a nemůžou 
+dojet do cíle. V takovém případě je vozidlo vyřazeno ze simulace a dále již nijak
+neovlivňuje simulaci. Veškeré informace o vozidlech s vybitými bateriemi jsou
+však zaznamenávány a uchovávány pro algoritmy optimalizující pozice 
+nabíjecích stanic.
+
+\subsection{Druhy vozidel}
+\label{subsec:druhy_vozidel}
+
+Rozhraní simulátoru je přizpůsobeno možnosti rozlišovat mezi různými druhy 
+vozidel, jejichž vlastnosti a chování na silnici se může lišit. V aktuální 
+implementaci je použiván jediný typ vozidla pojmenovaný \emph{auto}.
+Veškeré vlastnosti vozidel ze \cref{sec:vozidla}, platí pro tento typ
+vozidla. Tento typ vozidla je specifický svým chováním po dosažení cílové 
+destinace. Poté co auto dorazí do cíle čeká náhodně dlouhou dobu, jež je dána 
+exponenciální distribucí a následně vyrazí zpět do počáteční pozice.
+
+Očekáváme, že tento typ vozidla vhodně popisuje reprezentativní vzorek
+vozidel, protože předpokládáme, že většina řidičů se typicky po čase vrací do místa
+výjezdu. 
+
+
+\section{Specifika reálné dopravní sítě}
+
+V této sekci poukážeme na specifické případy při simulování reálné dopravní sítě,
+které se odlišují od návrhu simulátoru, a odlišnosti v reálné implementaci simulátoru.
+
+\subsection{Poznámky k definici modelu dopravní sítě}
+\label{subsec:problemy_modelu}
+
+V obsahu \cref{sec:dopravni_sit} popisujeme zjednodušený model dopravní sítě. Část
+předpokladů, či vlastností zde popisovaných však plně neodpovídá realitě. Tyto
+nesrovnalosti popisujeme v následujícím textu. 
+
+Při popisu křižovatek tvrdíme, že se jedná o vrcholy stupně více než 2. 
+Tento předpoklad je běžně
+splněn i v reálné silniční síti. V implementaci simulátoru jsou reprezentovány reálnými 
+křižovatkami. Ze sítě simulátoru jsou ale typicky odstraněny silnice nižších tříd, čímž
+se také v grafu zmenšují stupně vrcholů a může docházet k degeneraci křižovatek
+na vrcholy stupně 2 (viz. \cref{sec:extrakce_site}). Během přípravy mapy se 
+snažíme tyto křižovatky z implementace eliminovat. Nezaručujeme však, že se v síti 
+simulátoru nevyskytují žádné degenerované křižovatky stupně 2. 
+
+Tato skutečnost ale zásadně neovlivňuje vlastnosti simulátoru. Hlavní motivací pro
+zadefinování objektů křižovatek je zefektivnění hledání optimální trasy vozidel
+(viz. \cref{subsec:hledani_trasy}), jež je s přehledem výpočetně nejnáročnější 
+operací v simulátoru. Na reálné dopravní síti je redukce vrcholů stupně 2 
+nepostradatelná s ohledem na praktickou použitelnost simulátoru na sítích větších 
+územních celků.
+
+\subsubsection{Problematika souvislosti grafu}
+\label{subsubsec:souvislost_grafu}
+
+Z \cref{def:graf_site} vyplývá, že graf dopravní sítě musí být souvislý graf. Vlivem
+výběru pouze části dopravní sítě (více viz. \cref{sec:extrakce_site}) však typicky
+dochází k rozpadu grafu sítě na více komponent souvislosti. Ty musíme před začátkem 
+simulace dopravy sloučit s co nejmenším zásahem do reprezentace dopravní sítě.
+
+Komponenty souvislosti slučujeme jednoduchou heuristickou metodou, založenou na 
+hledání křižovatek nejbližších měst (viz. \cref{def:krizovatky_mesta}) 
+z dvojice různých komponent. Tyto křižovatky následně propojíme silnicí typu
+s nejnižší kapacitou (viz. \cref{def:mnoz_typu_silnice} a \cref{def:kapacita_silnice}) a
+délkou danou zeměpisnou vzdáleností (viz. \cref{sect:zem_souradnice}).
+
+Předpokládáme, že většina komponent souvislosti vznikla vlivem výřezu nebo úpravy mapy 
+v hraničních či v málo osídlených oblastech. Proto předpokládáme, že přidání nové uměle 
+vytvořené hrany zásadně neovlivňuje realističnost simulace reálné dopravní sítě.
+
+
+\subsubsection{Poznámka ke generování vozidel}
+
+Při generování vozidel (viz. \cref{subsec:generovani_vozidel}) pracujeme pouze
+s hustotou zalidnění oblasti, což ale nutně nemusí realisticky popisovat reálný provoz.
+V simulaci například nebereme v úvahu, že některé málo zalidněné oblasti mohou
+být frekventovanější, než ty s vyšší hustotou zalidnění. Může se například jednat o
+pracoviště mnoha zaměstnanců mimo obytnou oblast.
+
+Při generování cílových měst zároveň předpokládáme, že přesun vozidel mezi velmi 
+vzdálenými městy je málo pravděpodobný, ale zároveň se snažíme eliminovat cesty na
+krátkou vzdálenost (typicky na území jednoho města) z důvodů zefektivnění simulace
+a získání relevantních dat potřebných pro náš optimalizační problém.
+
+V rámci realistické simulace je v oblasti generování vozidel vysoký potenciál 
+pro budoucí zlepšení našeho simulátoru. Například můžeme použít metodu využitou 
+v práci autorů \citet{kmeans_layout}, pracující s mírou zaměstnanosti v různých částech
+simulované oblasti.
+
+Simulátor je však navržen tak, aby bylo možno v budoucnu doimplementovat různé 
+varianty generování vozidel s co nejmenším zásahem do již naimplementovaných 
+variant. 
+
+
+\subsubsection{Poznámka k hledání cest}
+
+Popis hledání optimální cesty vozidla ze \cref{subsec:hledani_trasy} umožňuje
+pouze jednu korekci během trasy. K tomuto kroku bylo přistoupeno vzhledem ke snaze
+simulovat co nejhustší provoz. 
+
+Je možné, že se hustota provozu v průběhu cesty vozidla výrazně změní a nalezená
+trasa vozidla se bude výrazně lišit od reálně nejoptimálnější trasy. 
+Vzhledem k malé hustotě simulovaného provozu, který zásadním způsobem omezujeme
+pouze na dálkové trasy (viz. \cref{sec:predpoklady_navrhu}). Předpokládáme,
+že tato situace nebude nastávat velmi často. 
+
+Dalším odůvodněním přístupu plánování cesty je i skutečnost, že většina řidičů
+plánuje své cesty před výjezdem a jen v omezené míře zásadně upravují svou 
+trasu v průběhu jízdu, aby byla co nejoptimálnější. Jelikož většina řidičů není
+schopna tento velice komplexní problém efektivně vyřešit v průběhu cesty. 
+Jsme si vědomi možnosti používání široké škály navigačních programů, jež jsou 
+schopny informovat řidiče o dopravní situaci a aktualizovat optimální cestu.
+Předpokládáme však, že tyto zmíněné systémy nejsou neomylné a často není 
+navržená cesta nejoptimálnější a náš zjednodušený přístup plánování cesty 
+není výrazně horší ani rozdílný od reálného chování řidičů. 

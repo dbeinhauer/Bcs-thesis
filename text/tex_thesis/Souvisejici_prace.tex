@@ -1,0 +1,42 @@
+\chapter{Související práce}
+\label{chap:souvisejici_prace}
+
+V této kapitole si popíšeme několik souvisejících prací a stručně popíšeme 
+jejich vlastnosti.
+
+
+Simulátor SUMO\footnote{\url{https://www.eclipse.org/sumo/}} je velmi detailní
+simulátor dopravy v rozsahu funkcionalit zdaleka přesahující naši implementaci.
+V programu lze do jisté míry simulovat také elektromobily. Pro naše učely je
+ale tento program velmi komplexní a práce s optimalizačními algoritmy
+by tak byla neprakticky komplikovaná.
+
+Simulátor City Flow\footnote{\url{https://cityflow.readthedocs.io/en/latest/index.html}}
+se pyšní především výpočetní efektivitou\footnote{\url{https://cityflow.readthedocs.io/en/latest/introduction.html}}.
+Bohužel nenabízí jednoduché uživatelské rozhraní pro rozšíření o metody
+potřebné pro naši optimalizaci.
+
+V práci \citet{kmeans_layout} je navržen simulátor dopravy pro následnou 
+analýzu navě navrženého optmalizačního algoritmu rozmístění nabíjecích stanic
+na území Japonska. Optimalizační algoritmus v práci se snaží minimalizovat 
+počet vozidel, kterým se vybila baterie, pomocí posunů nabíjecích stanic směrem
+k místům, kde se v minulosti vybila baterie vozidla. Návrh simulátoru naší práce
+a optimalizační algoritmus s použití metody K-Means jsou inspirovány zmíněnou
+prací.
+
+V práci \citet{niccolai2021optimization} je zkoumáno několik variant evolučních
+algoritmů pro optimalizaci rozmístění nabíjecích stanic elektrických vozidel
+ve městě Milán. V práci byl porovnáván také hladový přístup rozmísťující 
+iterativně nabíjecí stanice na místa lokálních extrémů specificky zadefinované
+ztrátové funkce. 
+
+Práce \citet{zhu2016charging} se zabývá optimalizací rozmístění nabíjecích 
+stanic v okolí města Peking užitím technik genetického algoritmu. V práci 
+jsou porovnávány 2 varianty modelů popisující možné pozice nabíjecích stanic a
+je v ní poukázáno, že správná volba modelu ovlivňuje kvalitu řešení optimalizace. 
+
+V práci \citet{kinay2021full} je navžen simulátor pro rozvrhování pozic 
+nabíjecích stanic. Problém je zde matematicky popsán. V práci jsou navrženy
+2 varianty optimalizací. Jedna minimalizující celkovou cenu rozmístění 
+nabíjecích stanic s minimalizací odchylek od původní trasy, druhá optimalizuje
+pozice stanic s ohledem na minimalizaci odchylek.

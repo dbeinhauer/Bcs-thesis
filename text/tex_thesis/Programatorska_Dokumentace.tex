@@ -1,0 +1,283 @@
+\chapter{Programátorská dokumentace}
+\label{chap:prog_dok}
+
+Účelem této části je především vysvětlit vzájemnou propojenost jednotlivých
+tříd programu a vysvětlit jeho fungování v rámci celku. Podrobné informace o
+konkrétních metodách jednotlivých tříd jsou popsány v podrobné dokumentaci
+programu (viz. \cref{chap:prilohy}).
+
+
+\section{Struktura programu}
+Program je strukturován do vrstev tak, aby byla zajištěna jednoduchá práci s programem
+na různých úrovni abstrakce. 
+
+Uživatel pracuje pouze s nejabstraktnější vrstvou,
+kterou je třída \texttt{Optimizer}, jež spravuje veškerou logiku spojenou s optimalizací.
+Tato třída obaluje třídu \texttt{TimeTable}, jež je zodpovědná za správné fungování
+diskrétní simulace a vytváři abstrakci pro třídu \texttt{TrafficSimulator}. Třída
+\texttt{TrafficSimulator} je zodpovědná především za generování
+událostí simulace (např. následující výjezd vozidla, odkud vozidlo vyjede a 
+kam směřuje apod.) a propojení všech objektů simulace. Důležitým aspektem této 
+vrsty je správa načítání mapy. Třída spravuje objekty třídy \texttt{MapReader}
+a \texttt{GraphAdjuster} zodpovědné za správné předzpracování mapy. Dále je zodpovědná
+za veškeré objekty abstraktní třídy \texttt{Vehicle}, které reprezentují vozidla v 
+simulaci. V neposlední řadě také vytváří abstrakci pro třídy \texttt{Map}, která 
+reprezentuje nejnižší vrstvu programu. Třída
+\texttt{Map} je zodpovědná za veškeré grafové operace a veškeré operace pracující s 
+reálnou zeměpisnou pozicí. Její součástí je objekt knihovny \texttt{boost}
+s názvem \texttt{graph\_} reprezentující graf silniční sítě. Dále třída shlukuje 
+informace o nabíjecích stanicích (reprezentované pomocí třídy \texttt{ChargingStation})
+a městech náležících do simulované oblasti. 
+
+Součástí programu je také řada dalších tříd pokrývající pomocné operace programu.
+Některé z nich jsme již zmínili (\texttt{MapReader}, \texttt{GraphAdjuster}, 
+\texttt{Vehicle}, 
+\texttt{ChargingStation}). Za zmínku stojí ještě třídy \texttt{Car}, jež je potomkem třídy
+\texttt{Vehicle} reprezentující typ vozidla "auto" (viz. \cref{subsec:druhy_vozidel}),
+\texttt{Edge}, která pokrývá funkcionalitu a vlastnosti silnice v mapě (viz. \cref{def:silnice})
+a \texttt{Node}, jež plní funkci křižovatek na mapě (viz. \cref{def:krizovatka}).
+Zbylé třídy slouží především pro shlukování souvisejících informací 
+(parametry simulátoru, optimalizací, vlastnosti nabíjecích stanic, modelu apod.).
+
+Jedinou vyjímkou, jež není součástí struktury výše je část pracující s 
+parametry programu, jež je realizována pomocí knihovny \texttt{boost}. Přesněji pomocí
+funkcionalit z \texttt{program\_options}.
+
+
+\section{Třída Optimizer}
+
+Třída \texttt{Optimizer} je hlavní třídou celého programu, která na základě 
+uživatelských vstupů spouští a realizuje zvolenou optimalizaci. Vytváří 
+abstrakci nad třídou \texttt{TimeTable}, jež používáme pro spouštění simulací. 
+Do rozhraní třídy náleží metody spouštějící optimalizační algoritmy:
+
+\begin{verbatim}
+    GreedyAlgorithm
+    GeneticAlgorithm
+    KMeansAlgorithm
+\end{verbatim}
+
+Metoda, jež počítá ztrátovou funkci modelu po uběhnutí simulace:
+\begin{verbatim}
+    ModelLoss
+\end{verbatim}
+
+A metoda, která opakovaně simuluje provoz na náhodně vygenerovaném modelu:
+\begin{verbatim}
+    RunMultipleSimulations
+\end{verbatim}
+
+Tato metoda slouží pro analýzu optimalizačních metod pro porovnání metod s 
+náhodným přístupem. \Cref{chap:optim} nabízí podrobnější popis jednotlivých 
+optimalizačních metod a ztrátové funkce. Dále třída obsahuje řadu privátních 
+metod zajišťujících správnou funkčnost hlavních metod popsaných výše. Více informacím
+je specifikováno v podrobné dokumentaci (viz. \cref{chap:prilohy}).
+
+\section{Třída TimeTable}
+
+Třída \texttt{TimeTable} je třída zodpovědná za správné fungování diskrétní
+simulace. Vytváří abstrakci třídy \texttt{TrafficSimulator} a slouží jako rozhraní pro
+zisk informací o vlastnostech simulace (pro analýzu optimalizačních metod). 
+Do jejího rozhraní náleží především funkce spravující diskrétní simulaci.
+Další skupinou metod této třídy jsou metody s předponou \texttt{Get}, 
+s jejíž pomocí jsme schopni získat relevantní informace o simulaci.
+Jediná metoda, jež nenáleží do zmíněných skupin je \texttt{LoadMap}. Ta slouží
+jako zprostředkovatel žádosti o načtení mapy a spouští příslušné
+metody ve třídě \texttt{TrafficSimulator}.
+
+\Cref{chap:prubeh_simulace} nabízí podrobnější popis fungování diskrétní
+simulace.
+
+
+\section{Třída TrafficSimulator}
+
+Třídu \texttt{TrafficSimulator} lze považovat za jádro celého simulátoru, jejíž funkce
+je spravovat objekty simulace. V rámci simulace je zodpovědná především za
+generování náhodných jevů (pozice nabíjecích stanic, generování vozidel, doby 
+následující akce apod.) (viz. \cref{subsec:generovani_vozidel}), 
+jež je zastoupeno metodami s předponou \texttt{Generate}. Pomocí této třídy jsou v simulaci
+spravovány objekty vozidel (potomci třídy \texttt{Vehicle}). Zásadní vlastností této třídy
+je vytváření rozhraní pro práci s třídou \texttt{Map}, jež pokrývá veškeré grafové 
+operace programu. S třídou \texttt{Map} také úzce souvisí třídy 
+\texttt{MapReader} a \texttt{GraphAdjuster}, sloužící pro načtení a předpřípravu
+uživatelské reprezentace mapy do formátu, jenž je uložen
+ve třídě \texttt{Map}. \Cref{sec:soubor_mapy} podrobně popisuje formát vstupních souborů.
+
+
+\section{Třída Map}
+
+Třída \texttt{Map} je technicky nejkomplexnější část programu. Slouží
+jako rozhraní pro veškeré grafové operace a operace, jež pracují s reálnou
+geografickou pozicí na mapě. Graf dopravní sítě je reprezentován pomocí 
+příslušných objektů grafové části knihovny \texttt{boost}. Dále jednotlivé křižovatky 
+(\cref{def:krizovatka}) a silnice (\cref{def:silnice}) jsou navíc reprezentovány 
+vlastními objekty třídy \texttt{Node} (křižovatky) a \texttt{Edge} (silnice). 
+Třída také sdružuje všechny nabíjecí stanice (\cref{def:nabijeci_stanice}) vyskytující 
+se v mapě (reprezentovány třídou \texttt{ChargingStation}) a informace o rozmístění a 
+populaci měst (\cref{def:mesto}) v simulované oblasti.
+
+Třída obsahuje metody pro spravování podoby grafu, informací o nabíjecích 
+stanicích a městech. Tyto funkcionality pokrývají metody s předponou \texttt{Add} a 
+\texttt{Set}. Dále jsou zde metody pro získávání informací o objektech mapy začínající
+příponou \texttt{Get} a \texttt{Exist} a metody přímo související s diskrétní simulací a 
+optimalizací (\texttt{ResetSimulation} a \texttt{SimulateVehiclePassedThroughEdge}). Poslední
+skupinou metod jsou nejkomplexnější operace třídy pracující s grafem, či mapou.
+
+
+\subsection{Operace na mapě}
+
+S ohledem na řešený problém je velmi důležitým aspektem návrhu hledání 
+nejkratších cest. Program umí pracovat s 2 variantami algoritmu pro hledání
+nejkratších cest v grafu. Těmi jsou Dijkstrův algoritmus, jenž je využívám
+především pro hledání vzdáleností v grafu (např. v K-Means), a A-Star 
+(\cref{sec:a_star}), jenž je používám v diskrétní simulaci pro hledání 
+nejvýhodnější cesty vozidla (viz. \cref{subsec:hledani_trasy}).
+Jako heuristika algoritmu A-Star je zvolena reálná geografická vzdálenost
+mezi křižovatkami, která je spočítána pomocí příslušných vztahů pro výpočet
+sférické vzdálenosti (viz. \cref{sect:zem_souradnice}). 
+
+Dijkstrův algoritmus, algoritmus A-Star a výpočet sférické vzdálenosti je realizován
+pomocí metod (ve stejném pořadí, jak jsou vypsány):
+
+\begin{Verbatim}
+    DijkstraFindDistances
+    FindShortestPath
+    ComputeSphericalDistance
+\end{Verbatim}
+
+Speciální metodou související s výpočtem nejkratší cesty v grafu je:
+
+\begin{Verbatim}
+    FindVehiclePath
+\end{Verbatim}
+
+Ta hledá nejkratší cestu mezi vrcholy, ale bere také v úvahu potřebu návštěvy nabíjecí
+stanice, z níž vybere heuristicky tu nejvhodnější (viz. \cref{subsec:zajizdeni_na_nabijecku}).
+
+Další metodou pracující s grafy je metoda pro hledání komponent souvislosti, 
+využívaná v předpřípravě mapy pro simulaci.
+
+\begin{Verbatim}
+    TestComponents
+\end{Verbatim}
+
+Třída také obsahuje metodu hledající nejbližšího města od křižovatek a nejbližší
+nabíjecí stanice od středů měst:
+
+\begin{Verbatim}
+    FindCityNodes
+    FindCitiesNearestChargingStations
+\end{Verbatim}
+
+
+\section{Třídy objektů mapy}
+
+Mezi třídy reprezentující objekty na mapě patří reprezentace křižovatek (\texttt{Node}),
+silnic (\texttt{Edge}) a nabíjecích stanic (\texttt{ChargingStation}). 
+Tyto třídy slouží především pro udržování informací o vlastnostech objektů,
+obsahují však také jednoduchou logickou vrstvu pokrývající především správnou 
+inicializaci, či aktualizaci informací v průběhu simulace. Třída \texttt{ChargingStation}
+také pokrývá logickou vrstvu související s nabíjením vozidel (spravuje čekání 
+vozidel v řadě, doby nabíjení apod.).
+
+
+\section{Třídy pro načítání a předpřípravu dat}
+
+Reprezentaci mapy je potřeba na začátku programu načíst z předpřipraveného 
+formátu (viz. \cref{sec:soubor_mapy}) a řádně zpracovat do podoby s níž bude
+simulátor dále pracovat (\cref{def:graf_site}). K tomuto
+účelu slouží třídy \texttt{MapReader} a \texttt{GraphAdjuster}.
+
+\subsection{Třída MapReader}
+Třída \texttt{MapReader} převádí vstupní reprezentaci dat do požadovaného formátu
+pomocí metod s předponou \texttt{Load}. Nejdůležitější metodou tohoto typu je metoda
+\texttt{LoadMap}, jež načte veškeré potřebné informace a provede také předpřípravu 
+mapy pro správné fungování simulátoru a zlepšení efektivity. Zmíněné úpravy
+provádí s pomocí třídy \texttt{GraphAdjuster}. Dalším charakteristickou vlastností třídy
+\texttt{MapReader} je možnost uložení aktuální reprezentace mapy (po předpřípravě mapy)
+do souboru v požadovaném vstupním formátu pro efektivnější opakované 
+načítání mapy. Mezi tyto metody patří takové, jejichž přípona je \texttt{Write}.
+
+Třída nabízí možnost načítat a zapisovat také reprezentaci všech nabíjecích
+stanic modelu metodami:
+
+\begin{verbatim}
+    LoadChargingStations
+    WriteStations
+\end{verbatim}
+
+\subsection{Třída GraphAdjuster}
+Vzhledem k typicky velkému rozměru vstupních dat je pravděpodobné, že výsledná
+reprezentace mapy nebude splňovat veškeré potřebné vlastnosti nutné k správnému
+chování programu, či bude jejich reprezentace zbytečně neefektivní. 
+Typickými příklady tohoto problému je rozpad grafu na více komponent souvislosti
+či vznik vrcholů stupně 2. Podrobněji tuto problematiku popisuje \cref{chap:priprava_mapy}. 
+
+Řešení těchto potíží zajisťuje třída \texttt{GraphAdjuster} úzce pracující s
+třídou \texttt{MapReader}. Ta po načtení grafu zkontroluje zda je graf souvislý
+a pokud není, pak jej převede do souvislé podoby 
+(viz. \cref{subsubsec:souvislost_grafu}). Dále se také zbavuje veškerých vrcholů 
+stupně 2, čímž výrazně zefektivňuje budoucí simulaci (viz. \cref{subsec:problemy_modelu}). 
+Operace jsou realizovány metodami:
+
+\begin{verbatim}
+    MergeTwoComponents
+    MergeDegreeTwoVertices
+\end{verbatim}
+
+
+\section{Třída Vehicle}
+
+Třída \texttt{Vehicle} je třída zahrnující veškeré informace o daném vozidle (\cref{sec:vozidla}),
+s jejíž pomocí je možné simulovat chování vozidel a příslušně tak upravovat simulátor.
+Při návrhu této třídy byla snaha co nejobecněji vyjádřit chování vozidel 
+různých druhů a jednotlivé druhy vozidel simulace následně reprezentovat třídou,
+jež je potomkem \texttt{Vehicle}. V naší implementaci je zvolen pouze jeden typ vozidla a 
+to typ \texttt{Car}, jehož specifickou vlastností je, že po dosažení cílové 
+destinace vrací zpět do místa výjezdu (viz. \cref{subsec:druhy_vozidel}).
+
+Metody třídy \texttt{Vehicle} slouží převážně k získávání informací o vozidle
+jinými objekty (např. aktuální stav baterie, aktuální pozice, 
+zda míří na nabíjecí stanici apod.), případně k nastavování stavových parametrů 
+vozidel (míří na nabíjecí stanici, začalo čekat v řadě na nabíjení apod.)
+Objekty třídy jsou také schopny spočítat čas a hladinu baterie po průjezdu
+silnicí, dokonce i posloupnosti silnic (celé cesty). Tyto informace jsou důležité
+především pro diskrétní simulaci (\cref{chap:prubeh_simulace}) a při rozhodování, 
+zda je potřeba jet na nabíjecí stanici (\cref{subsec:zajizdeni_na_nabijecku}).
+Zbylé metody slouží pro simulaci akcí vozidel. Je zde metoda pro aktualizaci
+trasy vozidla a nabití vozidla:
+
+\begin{verbatim}
+    UpdateVehiclePath
+    ChargeBattery
+\end{verbatim}
+
+Nakonec obsahuje třída i metody, jež řádně simulují průjezd vozidla po silnici. 
+V tomto případě jsou naimplementovány 3 varianty, jež řeší všechny možné varianty
+průjezdu vozidla (\cref{subsec:udalost_presunu}) po silnici 
+(průjezd silnice, výjez z vniřku ven, cesta uvnitř silnice).
+
+
+\section{Pomocné třídy}
+
+Zbylé třídy implementace slouží především k zapouzdření souvisejících informací,
+jako jsou například parametry simulátoru, optimalizací, informace o pozicích na mapě, 
+shrnující popis modelu a mnoho dalších. Názvy zmíněných tříd jsou:
+
+\begin{verbatim}
+    SimulationParameters
+    OptimizerParameters
+    MapPosition
+    ModelRepresentation
+\end{verbatim}
+
+Tyto třídy slouží především k uchovávání informací o specifických objektech a
+zjednodušenou manipulaci s daty.
+
+
+\section{Testy programu}
+
+K programu jsou také dodány testy zvolených problematických funkcionalit a
+především pak testy načítání uživatelských dat, která jsou často i s ohledem na 
+objem vstupních dat zdrojem problémů. Jedná se o testy rozhraní Microsoft Unit
+Testing Framework pro C++. Návod na spuštění testů je k dohledaní v \citep{corob-msft_2022}.

@@ -1,0 +1,336 @@
+\chapter{Optimalizační algoritmy pro rozmístění nabíjecích stanic}
+\label{chap:optim}
+
+Náš simulátor poskytuje celkem 3 odlišné strategie pro optimalizaci rozmístění
+nabíjecích stanic, z nichž 2 také umožňují optimalizovat počet použitých stanic.
+V této kapitole zvolené algoritmy popíšeme a zadefinujeme také ztrátovou funkci
+optimalizace.
+
+
+\section{Ztrátová funkce (loss function)}
+\label{sec:loss}
+
+Abychom mohli optimalizovat řešení problému musíme zvolit způsob měření 
+kvality jednotlivých modelů rozmístění nabíjecích stanic. K tomuto účelu slouží tzv. 
+\emph{ztrátová funkce} (loss), kterou volíme podle řešeného problému.
+Typicky je ztrátová funkce definována tak, aby s klesající funkční hodnotou 
+rostla kvalita řešení.
+
+Zadefinujme ztrátovou funkci, která popisuje kvalitu modelu $M$ rozmístění nabíjecích
+stanic na dopravní síti simulátoru.
+
+\begin{defn}[Ztrátová funkce modelu]\label{def:loss}
+    \emph{Ztrátová funkce modelu} $M$ s parametry
+    $\{p_1, p_2, p_3, p_4, p_5\} \in \mathbb{R}^+_0$, je definována jako
+    $L:\mathbb{N}_0^2 \times \mathbb{R}^3 \to \mathbb{R}$, kde:
+        $$L(v_1, v_2, v_3, v_4, v_5) := \sum_{i=1}^5 p_i \cdot v_i$$
+    Pro hodnoty:
+    \begin{itemize}
+        \item $v_1 \in \mathbb{N}_0$ - počet nabíjecích stanic v modelu $M$
+        \item $v_2 \in \mathbb{N}_0$ - počet vozidel, jimž se v modelu $M$ během simulace vybila baterie
+        \item $v_3 \in \mathbb{R}$ - průměrné trvání cesty vozidel v minutách
+        \item $v_4 \in \mathbb{R}$ - průměrný rozdíl hladin baterie vozidel na počátku a konci cesty
+        \item $v_5 \in \mathbb{R}$ - průměrná doba čekání ve frontě na nabíjecí stanici v minutách
+    \end{itemize}
+\end{defn}
+
+
+S ohledem na volbu optimalizačních algoritmů, dává smysl zaměřit se při volbě
+parametrů ztrátové funkce pouze na analýzu počtu nabíjecích stanic a počtu 
+vozidel, kterým se během simulace vybila baterie.
+Zbylé parametry nejsme schopni s námi zvolenými optimalizačními algoritmy 
+cíleně optimalizovat a mají spíše informativní funkci, pro detailnější analýzu
+řešení. Z tohoto důvodu volíme pro tyto vlastnosti hodnoty parametrů,
+tak aby výrazně nezasahovaly do hodnoty ztrátové funkce.
+
+\subsection{Poznámka k vybitým vozidlům}
+
+Je potřeba poukázat na skutečnost, že v reálném případě téměř nikdy nenastává situace,
+kdy se baterie vozidla úplně vybije a vozidlo nemůže pokračovat dále v cestě.
+Pokud by k tomuto jevu docházelo často, pak by bylo využití elektrických vozidel
+prakticky nepoužitelné pro bězné uživatele. V našem simulátoru však k tomuto jevu
+dochází nerealisticky často.
+
+Důvodem volby návrhu takového simulátoru je jednoduchá práce s údaji o
+vybitých vozidlech v optimalizačních algoritmech.
+Jedná se totiž o parametr, který vždy jasně popisuje kvalitu řešení. To se 
+například nedá říct o průměrném rozdílu hladin baterie na začátku a v cíli cesty, či
+o průměrné době cestování vozidel.
+Bylo by podstatně obtížnější odhadnout kvalitu řešení, vzhledem k těmto parametrům.
+
+Oproti tomu počet aut s vybitou baterií dobře popisuje počet aut, které
+potřebují navštívit nabíjecí stanici, která je ovšem velmi vzdálená od jejich 
+trasy. Zjednodušeně řečeno, čím méně vybitých aut v simulaci, tím optimálnější je 
+rozmístění stanic v modelu.
+
+Myšlenku optimalizace řešení pomocí vybitých vozidel jsme převzali z práce autorů
+\citet{kmeans_layout}.
+
+
+\section{Optimalizace hladovým (greedy) algoritmem}
+\label{sec:greedy}
+
+Nejjednodušší implementovaný optimalizační algoritmus jsme pojmenovali jako tzv. 
+\emph{Hladový algoritmus}.
+Jedná se o heuristický postup, jehož cílem je hladově na základě 
+aktuálních výsledků simulace optimalizovat pozice nabíjecích stanic a jejich počet.
+
+Princip řešení je založen na opakovaném simulování dopravy na modelech, ve 
+kterých jsou nabíjecí stanice rozmísťovány pomocí jednoduché heuristiky 
+založené na výsledcích předchozí simulace. K jeho popisu se hodí zadefinovat
+pojem tzv. \emph{užitečné nabíjecí stanice}.
+
+\begin{defn}[Užitečnost nabíjecí stanice]\label{def:uzitecna_stanice}
+    Nabíjecí stanici nazveme \emph{užitečnou}, pokud byla v nějakém okamžiku
+    simulace použita alespoň jedním vozidlem. V opačném případě nazveme stanici 
+    \emph{zbytečnou}.
+\end{defn}
+
+Dále pracujeme s parametrem $r \in \mathbb{N}_0$, pro který musí platit
+$|M_0| - |M_1| \leq r$, kde $|M|$ značí počet nabíjecích stanic v modelu $M$.
+Parametr $r$ tedy popisuje, o kolik se může zmenšit celkový počet nabíjecích 
+stanic v modelu $M_1$ oproti modelu $M_0$.
+
+Algoritmus nejprve spustí simulaci na aktuálním modelu $M_0$. Následně nalezne
+všechny užitečné nabíjecí stanice $U_0$ a vloží je do novém modelu $M_1$. Zbytečné 
+nabíjecí stanice v novém modelu nepoužívá. Po nalezení všech užitečných stanic 
+spočítá rozdíl $r_0 = |M_0| - |U_0|$. Pokud $r_0 \leq r$, pak nabíjecí stanice
+modelu $M_1$ jsou právě všechny užitečné stanice. Pokud je rozdíl počtu stanic 
+vyšší než $r$, pak do $M_1$ náhodně dogenerujeme stanice, aby $|M_0| - |M_1| = r$.
+
+Tento postup opakujeme iterativně do doby než je buď dosaženo maximálního
+povoleného počtu iterací algoritmu, nebo pokud je rozdíl mezi hodnotami chybových funkcí dvou posledních 
+modelů menší než zvolená hranice (algoritmus dokonvergoval k řešení).
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Hladová optimalizace}{\newline $s_0$ - počáteční počet stanic,\newline
+    $r$ - nejvyšší povolený rozdíl mezi iteracemi,\newline
+    $iter_{max}$ - maximální počet iterací,\newline
+    $loss_{diff}$ - hranice konvergence (rozdíl chybové funkce mezi iteracemi)\newline
+    }
+    \State Náhodně inicializuj model $M$ s celkovým počtem stanic $s_0$.
+    \State $iter \gets 0$   \Comment Aktuální číslo iterace.
+    \State $loss_{prev} \gets 0$    \Comment Hodnota chybové funkce minulého modelu.
+    \While{$iter < iter_{max}$}
+        \State Simuluj dopravu na modelu $M$.
+        \State $loss_{curr} \gets$ hodnota chybové funkce modelu $M$
+        \If{$|loss_{prev} - loss_{curr}| < loss_{diff}$}
+            \If{$Iter > 0$} \Comment Přeskoč pokud se jedná o první iteraci.
+                \State Ukonči optimalizaci.
+            \EndIf
+        \EndIf
+        \State $s \gets$ počet stanic modelu $M$
+        \State $U \gets$ užitečné stanice modelu $M$
+        \If{$s - |U| \leq r$}
+            \State $M \gets$ model s nabíjecími stanicemi $U$
+        \Else
+            \State $r_{curr} \gets s - |U|$ \Comment Počet stanic pro náhodné vygenerování.
+            \State $S_{rand} \gets$ Náhodně vygeneruj $r_{curr}$ stanic.
+            \State $M \gets$ model s nabíjecími stanicemi $U$ a $S_{rand}$
+            \State $loss_{prev} \gets loss_{curr}$
+        \EndIf
+        \State $iter \gets iter + 1$
+    \EndWhile
+\EndFunction
+\end{algorithmic}
+\caption{Algoritmus optimalizující pozice a počet nabíjecích stanic hladovým způsobem.}
+\label{alg:greedy}
+\end{algorithm}
+
+
+\section{Optimalizace genetickým algoritmem}
+\label{sec:genetic_optim}
+
+Další optimalizační metodou je optimalizace genetickým algoritmem 
+(viz. \cref{section:genetic_alg}). Použití genetického algoritmu pro zvolený
+optimalizační problém je inspirováno prací autorů \citet{niccolai2021optimization}.
+Metoda umožňuje podobně jako optimalizace hladovým algoritmem optimalizovat
+také počet nabíjecích stanic.
+
+Jedinci v optimalizaci reprezentují jedno rozmístění nabíjecích stanic.
+Pro snadnou manipulaci kódujeme jedince jako uspořádanou n-tici nabíjecích
+stanic (kde $n$ značí celkový počet stanic). U jedinců nepožadujeme stejnou 
+velikost a je tak možné optimalizovat i počet nabíjecích stanic.
+Jako fitness jedince volíme loss modelu po simulaci (\cref{def:loss}).
+Musíme brát v potaz, že v našem případě mají lepší jedinci nižší hodnotu fitness,
+oproti typické variantě GA, kde vyšší fitness typicky značí lepší kvalitu řešení.
+
+Pracujeme s variantou GA, kde je počet jedinců v různých generacích stejný.
+Optimalizace GA pak probíhá následovně. Nejprve zkopírujeme zvolený počet nejlepších
+jedinců aktuální generace do nové generace. Zbylé jedince dostaneme křížením.
+Individua pro křížení volíme turnajovou selekcí. Dále aplikujeme jednobodové křížení,
+v němž využijeme zakódování jedince jako uspořádanou n-tici stanic.
+Náhodně zvolíme bod křížení jako pozici v reprezentaci jedince s 
+menším počtem stanic. Reprezentaci jedince rozdělíme pomocí tohoto bodu na dvě části 
+(první část je před zvoleným bodem, druhá je za ním).
+Následně mezi jedinci určenými pro křížení vyměníme druhou část reprezentace a
+dostaneme tak jedince nové generace. 
+
+Nové jedince ještě následně mutujeme. Mutaci dělíme na dvě podčásti.
+V první části procházíme každou nabíjecí stanici jedince a se zvolenou (malou)
+pravděpodobností ji nahradíme novou náhodně vygenerovanou. 
+Ve druhé části náhodně odebíráme, či přidáváme nové náhodně vygenerované stanice.
+Tato část mutace nám umožňuje získávat jedince odlišných velikostí 
+(tedy i zkoumat varianty řešení s proměnlivým počtem nabíjecích stanic).
+
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Optimalizace GA}{\newline $num_{gen}$ - počet generací,\newline
+    $pop_{size}$ - velikost populace,\newline 
+    $k$ - počet nejlepších jedinců pro přímou volbu do nové populace \newline
+    }
+    \State Nahodně inicializuj první generaci jedinců a na každém spusť simulaci.
+    \State $iter \gets 0$   \Comment Aktuální číslo iterace.
+    \While{$iter < num_{gen}$}
+        \State Zkopíruj $k$ nejlepších jedinců do nové populace.
+        \State $pairs \gets$ Turnajovou selekcí zvol $(pop_{size} - k) / 2$ dvojic pro křížení.
+        \ForAll{pairs}
+            \State Proveď jednobodové křížení na dvojici jedinců.
+            \State Proveď mutaci na zkřížených jedincích.
+            \State Přidej zmutované jedince do nové populace.
+        \EndFor
+    \EndWhile
+\EndFunction
+\end{algorithmic}
+\caption{Algoritmus optimalizující pozice a počet nabíjecích stanic s pomocí genetického algorimu.}
+\label{alg:genetic}
+\end{algorithm}
+
+
+\section{Optimalizace inspirovaná k-means}
+\label{sec:kmeans_optim}
+
+Poslední optimalizace použita v práci je inspirována algoritmem k-means 
+(viz. \cref{sec:kmeans_alg}). Návrh algoritmu byl také inspirován optimalizačním
+algoritmem z \citet{kmeans_layout}. Jako jediná z optimalizačních metod optimalizuje
+tato metoda pouze pozice nabíjecích stanic.
+
+Algoritmus je založen na myšlence, že centroidy z algoritmu k-means jsou pozice
+nabíjecích stanic. Zvolené $k$ z algoritmu tedy udává počet nabíjecích stanic.
+V prvním kroce algoritmu jsou centroidy generovány náhodně.
+Následně probíhá krok podobný hledání shluků. Pro každou křižovatku v grafu 
+(viz. \cref{def:krizovatka}) spočítáme vzdálenost od každého centroidu pomocí
+Dijkstrova algoritmu. Křižovatka pak náleží shluku, který odpovídá nejbližšímu
+centroidu od křižovatky.
+
+Komplikovanější část algoritmu je metoda přepočítávání nové pozice centroidu. 
+Předpokladem pro správnou funkci je přístup k informacím o průměrné hladině
+baterie vozidel ve vrcholech grafu (viz. \cref{def:segment_silnice}). 
+
+Algoritmus nejprve spočítá tzv. \emph{váhu křižovatky}. Ta popisuje "míru vybitosti"
+vozidel v okolí křižovatky. Při výpočtu váhy libovolné křižovatky 
+$k$ procházíme všechny silnice $r$ napojeny na křižovatku $k$. 
+Každá silnice poskytuje také informaci o průměrné hladině nabití vozidel,
+jež silnicí projížděly. Informace o průměrné hladině nabití vozidel je uložena
+v segmentech silnice. Každý segment $s$ silnice $r$ přispěje k váze křižovatky 
+$k$ hodnotou závislou na vzdálenosti segmentu od křižovatky $v$ 
+a hodnotě $s.b$ (průměrné hladině baterie v segmentu $s$). Takto projdeme 
+všechny křižovatky grafu a všechny silnice, které jim náleží a dostaneme tak váhu
+pro každou křižovatku grafu. 
+
+Na váhu křižovatky se dá z pohledu algoritmu k-means nahlížet tak, že váha 
+udává počet bodů v prostoru, jež jsou umístěny na pozici křižovatky $k$. 
+Hlavní motivací pro zadefinování této veličiny je vytvoření vhodné abstrakce
+pro aplikaci algoritmu k-means.
+
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Výpočet váhy křižovatky}{\newline$k$ - křižovatky, jejíž váhu chceme spočítat}
+    \State $w \gets 0$ \Comment Počáteční váha křižovatky $k$ je 0.
+    \ForAll{silnice $r$ náležící vrcholu $k$}
+        \State $w_r \gets 0$ \Comment Váha silnice $r$.
+        \State $n \gets$ |r.S| \Comment Počet segmentů silnice.
+        \ForAll{segment $s$ silnice $r$}
+            \State $i \gets$ vzdálenost segmentu $s$ od křižovatky $k$ \Comment V počtech segmentů.
+            \State $avg \gets$ průměrná hladina baterie v segmentu $s$ \Comment V rozmezí (0-1).
+            \State $w_r \gets w_r + 1 - i / n$ \Comment Přičti k váze silnice $r$, váhu segmentu $s$.
+        \EndFor
+        \State $w \gets w + w_r$ \Comment Přičti k váze křižovatky $k$ váhu silnice $r$.
+    \EndFor
+    \State \Return $w$
+
+\EndFunction
+\end{algorithmic}
+\caption{Funkce pro výpočet váhy křižovatky.}
+\label{alg:vert_weight}
+\end{algorithm}
+
+
+Po spočítání vah křižovatek je aplikován klasický postup aktualizace nové pozice 
+centroidu algoritmu k-means. Spočítá se vážený průměr souřadnic všech křižovatek 
+náležících do zvoleného shluku s pomocí vah křižovatek. Souřadnice z nichž 
+počítáme průměr jsou reálné zeměpisné souřadnice (viz. \cref{sect:zem_souradnice}) 
+křižovatek. 
+
+Vypočtená průměrná pozice $P$ ale téměř nikdy nebude odpovídat pozici nějaké křižovatky
+v grafu, jež jsou jediné objekty v grafu simulace, u nichž známe zeměpisné souřadnice.
+Pozice $P$ tak nemůže být novým centroidem, jelikož náš optimalizační algoritmus
+přiřazuje vrcholy do shluků na základě vzdáleností v grafu. Je tedy potřeba 
+spočtenou pozici aproximovat s nějakou pozicí v grafu.
+
+Vzhledem k paměťovým a výpočetním omezením simulátoru jsme si schopni pamatovat
+pouze informace o zeměpisných souřadnicích křižovatek. Musíme tedy vypočtenou pozici 
+řádně aproximovat pouze za pomoci souřadnic křižovatek. Mějme tedy centroid $centr$.
+Nejprve nalezneme nejbližší křižovatku $k$ od $centr$ (ze zeměpisných souřadnic).
+Následně nalezneme nejbližší sousední křižovatku $k_{neigh}$ křižovatky $k$ od
+hledaného centroidu $centr$. Tímto postupem odhadujeme, že nová pozice centroidu 
+leží na silnici $r$ mezi křižovatkami $k$ a $k_{neigh}$. Zároveň protože 
+je křižovatka $k$ blíže hledané pozici než $k_{neigh}$, předpokládáme, že
+hledaná pozice bude náležet segmentu $s$ silnice $r$, jež je blíže ke křižovatce
+$k$ než ke křižovatce $k_{neigh}$. Segment $s$, jenž je vhodnou aproximací 
+hledané pozice, volíme uniformně náhodně ze všech segmentů z $r.S$, které
+jsou blíže vrcholu $v$. Takto dostaneme novou pozici centroidu a v některých
+případech také nabíjecí stanice, která je dána segmentem $s$.
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Nejbližší pozice grafu od zeměpisné pozice}{\newline
+    $coord$ - zeměpisné souřadnice hledané pozice}
+    \State $k \gets$ Nejbližší křižovatka od pozice se souřadnicemi $coord$.
+    \State $k_{neigh} \gets$ Soused křižovatky $k$, který je nejblíže od pozice $coord$.
+    \State $r \gets$ - Silnice dána křižovatkami $k$ a $k_{neigh}$.
+    \State $best_{pos} \gets$ Uniformně náhodně vygenerovaný segment silnice $r$,
+    který je blíže od křižovatky $k$.
+\EndFunction
+\end{algorithmic}
+\caption{Funkce pro nalezení nejbližší pozice v grafu od zeměpisné souřadnice.}
+\label{alg:find_closest_position}
+\end{algorithm}
+
+Po nalezení nového centroidu následně nalezneme nové shluky a postup výše 
+opakujeme ve zvoleném počtu iterací. Po uplynutí všech iterací vytvoříme nový model
+v němž budou nabíjecí stanice umístěny na pozicích centroidů. Spustíme simulaci
+na novém modelu a následně znovu aplikujeme postup podobný algoritmu k-means.
+Tento postup taktéž opakujeme zvolený počet iterací.
+
+Postup hledání nejbližšího pozice v grafu od geografické souřadnice je pouze
+aproximační a nezaručuje nalezení reálně nejbližšího bodu. Předpokládáme však, 
+že tento postup odhadne pozici nejbližšího bodu s dostačující přesností.
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Optimalizace pomocí k-means}{\newline
+    $means_{iter}$ - počet iterací cyklu algoritmu k-means,\newline
+    $sim_{iter}$ - počet simulací modelu (počet spuštěných algoritmů k-means)\newline
+    }
+    \State Náhodně vygeneruj centroidy.
+    \State $iter_1 \gets 0$   \Comment Aktuální číslo iterace. 
+    \While{$iter_1 < sim_{iter}$}
+        \State Vytvoř model s nabíjecími stanicemi na pozicích centroidů.
+        \State Spusť simulaci.
+        \State Spočítej váhy vrcholů.
+        \State $iter_2 \gets 0$
+        \While{$iter_2 < means_{iter}$}
+            \State Nalezni shluky centroidů.
+            \State Nalezni optimální geografické pozice nových centroidů.
+            \State Aproximačně nalezni pozice nových centroidů.
+        \EndWhile
+    \EndWhile
+\EndFunction
+\end{algorithmic}
+\caption{Algoritmus optimalizující pozice nabíjecích stanic s pomocí algorimu k-means.}
+\label{alg:kmeans}
+\end{algorithm}

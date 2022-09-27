@@ -1,0 +1,694 @@
+\chapter{Uživatelská dokumentace}
+\label{chap:uzivatelska_dokumentace}
+
+Hlavním cílem programu je na zvolené reprezentaci mapy opakovaně simulovat 
+dopravní síť a na základě této simulace optimalizovat rozmístění nabíjecích
+stanic s pomocí různých optimalizačních algoritmů. Po ukončení optimalizace
+vypíše zvolené relevantní informace o jednotlivých simulacích pro následnou 
+analýzu optimalizačních metod. Program také nabízí nastavitelnost široké škály 
+parametrů simulátoru dopravy i optimalizačních  metod pro detailnější analýzu.
+
+
+\section{Příprava před spuštěním}
+Rozlišujeme více variant spuštění programu podle OS, který používáme.
+
+Pokud pracujeme v OS \textbf{Windows 10}, pak můžeme použít již předkompilovaný 
+program, jenž je součástí přílohy. V tomto případě můžeme program rovnou spustit.
+Předkompilovaný spustitelný se nachází v adresáři:
+
+\begin{verbatim}
+    Win_executable/
+\end{verbatim}
+
+V tomto adresáři se nachází spustitelný program, adresář s předpřipravenou
+reprezentací mapy a další pomocné soubory pro správné fungování programu.
+Název spustitelného programu je:
+
+\begin{verbatim}
+    Traffic_Simulator.exe 
+\end{verbatim}
+
+\subsection{Sestavení programu}
+Pokud chceme program sestavit, pak je potřeba postupovat v následujících krocích.
+
+\subsubsection{Sestavení pro OS Linux}
+
+Pro sestavení programu v OS Linux potřebujeme
+\texttt{CMake 3.11}\footnote{\url{https://cmake.org/}}, 
+nebo vyšší (doporučujeme verzi \texttt{3.14+}), překladač podporující \texttt{C++11},
+knihovnu \texttt{Boost}\footnote{\url{https://www.boost.org/}} a
+Git\footnote{\url{https://git-scm.com/}}.
+
+Nejprve se přesuneme do adresáře s požadovanými zdrojovými kódy.
+\begin{verbatim}
+    cd source_code/Traffic_Simulator_cmake
+\end{verbatim}
+
+Pro konfiguraci spustíme příkaz (přidáme ještě možnost \texttt{-GNinja}, 
+pokud používáme Ninja\footnote{\url{https://ninja-build.org/}}).
+\begin{verbatim}
+    cmake -S . -B build
+\end{verbatim}
+
+Pro sestavení programu spustíme příkaz:
+\begin{verbatim}
+    cmake --build build
+\end{verbatim}
+
+Výsledný spustitelný program pak nalezneme:
+\begin{verbatim}
+    build/apps/Traffic_Simulator
+\end{verbatim}
+
+\subsubsection{Sestavení pro OS Windows 10}
+Pro sestavení programu v OS Windows 10 potřebujeme překladač podporující 
+\texttt{C++11}, Visual Studio 2019\footnote{https://visualstudio.microsoft.com/cs/},
+Git a \texttt{vcpkg}\footnote{\url{https://github.com/microsoft/vcpkg}}.
+
+Nejprve se přesuneme do adresáře, kde je uložen nástroj \texttt{vcpkg} a 
+nainstalujeme knihovnu Boost.
+\begin{verbatim}
+    cd $(Absolute_Path_To_vcpkg_Directory)
+
+    .\vcpkg\vcpkg install boost
+    .\vcpkg\vcpkg integrate install
+\end{verbatim}
+
+Následně se přesuneme do adresáře naší práce a zde do adresáře:
+
+\begin{verbatim}
+    cd source_code\Traffic_Simulator_VS
+\end{verbatim}
+ 
+Zde nalezenem soubor:
+\begin{verbatim}
+    Traffic_Simulator.sln
+\end{verbatim}
+
+Ten otevřeme v programu Visual Studio 2019, ve kterém projekt sestavíme.
+
+\section{Poznámka k příkladům}
+V následujícím textu popisujeme příklady použití programu v OS Linux.
+Pokud pracujeme v OS Windows, pak program spouštíme následujícím příkazem
+(se zvolenými parametry (viz. \cref{subsec:parametry_programu})):
+
+\begin{verbatim}
+    .\Traffic_Simulator.exe
+\end{verbatim}
+
+Pokud pracujeme s předpřipravenou mapou z adresáře:
+\begin{verbatim}
+    preprocesed\_maps
+\end{verbatim}
+
+Pak musíme pro fungování příkazů v příkladech, zkopírovat tento adresář do 
+adresáře se spustitelným souborem programu. Pokud pracujeme s již
+předkompilovaným programem v OS Windows, pak tato operace není nutná.
+
+\section{Formát souborů reprezentujících mapu}
+\label{sec:soubor_mapy}
+
+Pro správné fungování programu je potřeba při každém spuštění načíst reprezentaci
+mapy (\cref{sec:dopravni_sit}).
+Ta je rozdělena do 3 souborů a informace v nich zapsané si nesmějí 
+navzájem odporovat. Tyto 3 soubory jsou načítany v pořadí: soubor s reprezentací
+křižovatek, soubor s reprezentací silnic a soubor s reprezentací měst.
+Vzhledem k obvykle velké objemnosti dat reprezentující dopravní síť je 
+doporučeno při přípravě vstupních souborů postupovat podle
+kroků, jež popisuje \cref{chap:priprava_mapy}, s pomocí přiložených programů
+v adresáři \texttt{map\_preprocessing} práce (viz. \cref{chap:prilohy}).
+
+Pokud chce uživatel pracovat pouze s námi připravenou mapou České republiky, 
+jenž podrobněji popisuje \cref{chap:priprava_mapy}, je v adresáři
+\texttt{preprocesed\_maps} dodána reprezentace již připravené mapy.
+Struktura adresáře je:
+
+\begin{verbatim}
+./prepared_graph/
+    cities.txt
+    combined_nodes.txt
+    edges.txt
+    prepared_combined_nodes.txt
+    prepared_edges.txt
+\end{verbatim}
+
+V souborech výše jsou zapsány po řadě, reprezentace měst, reprezentace křižovatek,
+reprezentace hran a v souborech s předponou \texttt{prepared\_} je uložena 
+předpřipravená reprezentace mapy (bez křižovatek stupně 2) se stejnou reprezentací,
+jako v neupravené variantě (reprezentace měst se předpřípravou nemění).
+
+Formát všech vstupních souborů je strukturován po řádcích. V každém souboru
+je vždy ignorován první řádek, jehož účelem je popis formátu vstupních dat 
+jednotlivých řádků pro každý vstupní soubor. S ohledem na 
+přehlednost vstupních dat je doporučeno tento formát vždy dodržovat.
+Ve zbytku souboru je postupně na každém řádku reprezentován specifický objekt
+mapy, který je určen daným typem souboru. Jakékoli nedodržení formátu
+vstupních souborů vede s vysokou pravděpodobností k selhání načítání dat a
+není tak umožněna další práce s programem.
+
+
+\subsection{Soubor reprezentující křižovatky}
+\label{subsec:reprezentace_krizovatky}
+
+Předpokládaná hlavička (1. řádek) souboru je:
+\begin{Verbatim}
+    node_id latitude longitude city_id distance_km 
+\end{Verbatim}
+
+Každý řádek, kromě prvního řádku, reprezentuje právě jednu kžižovatku (\cref{def:krizovatka}).
+Požadujeme, aby na každém řádku bylo uloženo pět hodnot oddělených mezerou, které 
+reprezentují po řadě: identifikační číslo (ozn. ID) křižovatky, zeměpisnou šířku,
+v níž se křižovatka nachází, zeměpisnou délku, v níž se křižovatka nachází,
+ID města, do něhož křižovatka náleží, a vzdálenost křižovatky od centra tohoto města.
+
+Pro správnou funkci programu je potřeba, aby ID křižovatek byla celá nezáporná 
+čísla a aby křižovatky byly v souboru seřazeny vzestupně bez vynechaných hodnot ID.
+Tedy pokud např. v souboru existuje vrchol s ID 6, musí být předem definovány
+vrcholy s ID v rozmezí od 1 do 5. Dále požadujeme, aby ID křižovatek byly unikátní.
+Zeměpisná šířka, zeměpisná délka i vzdálenost města jsou reprezentovány 
+desetinným číslem s desetinnou tečkou. ID města je reprezentováno nezáporným
+celým číslem, jež musí být zadefinováno v souboru reprezentující města 
+(\cref{subsec:reprezentace_mesta}).
+
+
+Příklad formátu vstupního souboru, jenž reprezentuje křižovatky:
+\begin{Verbatim}
+    node_id latitude longitude city_id distance_km
+    0 50.0354962 14.4080276 1 5.855519633308941 
+    1 50.0352373 14.4080465 2 5.883717272182215 
+    2 50.0350876 14.4080758 0 5.8998150943334124
+    3 50.035876 14.4080352 0 5.8898140943334124
+\end{Verbatim}
+
+
+\subsection{Soubor reprezentující silnice}
+
+Předpokládaná hlavička (1. řádek) souboru je:
+\begin{Verbatim}
+new_node_id_1 new_node_id_2 length road_type
+\end{Verbatim}
+Každý řádek, kromě prvního řádku, reprezentuje právě jednu silnici (\cref{def:silnice})
+dopravní sítě. Požadujeme, aby na každém řádku byly uloženy čtyři hodnoty oddělené
+mezerou reprezentující: ID první křižovatky definující silnici, ID druhé
+křižovatky definující silnici, délka silnice a typ silnice.
+Předpokládáme, že ID křižovatek jsou v odpovídajícím formátu, 
+který je popsán v části pro reprezentaci křižovatek (\cref{subsec:reprezentace_krizovatky})
+a zároveň, že křižovatka s ID ze vstupu byla definována a načtena ze souboru 
+pro reprezentaci křižovatek.
+Délka silnice je reprezentována desetinným číslem s desetinnou tečkou.
+\Cref{tab:typy_silnice} vypisuje všechny typy silnice a jejich reprezentaci pro
+vstupní soubor.
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{ll}
+\toprule
+Reprezentace & Popis \\
+\midrule
+\texttt{m} & dálnice  \\
+\texttt{t} & silnice pro motorová vozidla \\
+\texttt{p} & silnice 1. třídy nebo  \\
+\texttt{o} & jiný druh silnice \\
+\bottomrule
+\end{tabular}
+\caption{Výpis všech variant druhů silnice.}
+\label{tab:typy_silnice}
+\end{table}
+    
+
+Příklad formátu vstupního souboru, jenž reprezentuje silnice:
+\begin{Verbatim}
+new_node_id_1 new_node_id_2 length road_type
+0 1 28.82 t 
+1 2 16.777 p
+2 3 17.303 m
+\end{Verbatim}
+
+
+\subsection{Soubor reprezentující města}
+\label{subsec:reprezentace_mesta}
+
+Předpokládaná hlavička (1. řádek) souboru je:
+\begin{Verbatim}
+city_id lat lon population
+\end{Verbatim}
+Každý řádek, kromě 1. řádku, reprezentuje právě 1 město (\cref{def:mesto}).
+Požadujeme, aby na každém řádku byly uloženy 4 hodnoty oddělené mezerou reprezentující:
+ID města, zeměpisnou šířku, v níž se nachází střed města, zeměpisnou délku, v 
+níž se nachází střed města, a počet obyvatel města.
+Požadujeme, aby ID města bylo nezáporné celé číslo. Pro zajištění správného 
+fungování programu je doporučeno reprezenovat města v souboru v rostoucím
+pořadí podle ID města bez opakování a bez vynechaných ID. Tato podmínka 
+však není na rozdíl od reprezentace křižovatek nutná.
+Zeměpisná šířka a délka jsou reprezentovány desetinným číslem s desetinnou 
+tečkou. Populace města je reprezentována nezáporným celým číslem.
+
+Příklad formátu vstupního souboru, jenž reprezentuje  města:
+\begin{Verbatim}
+city_id lat lon population
+0 49.39606475830078 15.590306282043457 51216 
+1 49.70147705078125 17.07569122314453 7516 
+2 51.02574920654297 15.061005592346191 4259 
+\end{Verbatim}
+
+
+\subsection{Výstupní soubory}
+
+Program také umožňuje zápis aktuálně načtené mapy do souborů ve vstupním formátu
+simulátoru. Tato funkcionalita je především užitečná, pokud je předpříprava
+původní mapy výpočetně náročná (odstraňování vrcholů stupně 2 nebo 
+sjednocování komponent souvislosti). V takovém případě můžeme předpřipravenou
+mapu uložit do formátu určeného pro načítání mapy a při opakovaném výpočtu
+přeskočit předpřípravu dat a rovnou spustit požadovaný výpočet.
+
+
+\section{Ovládání programu}
+
+Uživatel interaguje s programem pouze při jeho spuštění, kdy je potřeba
+zvolit příslušnou optimalizační metodu, její parametry a parametry simulace.
+Před spuštěním programu je potřeba připravit soubory s korektní 
+reprezentací mapy (\cref{sec:soubor_mapy}) a specifikovat 
+cestu k těmto souborům.
+
+
+\subsection{Parametry programu}
+\label{subsec:parametry_programu}
+Při spuštění programu zadáváme do terminálu parametry, kterými specifikujeme
+požadované chování simulátoru. Tyto parametry zapisujeme ve formě přepínačů za
+příkaz spouštějící program. Tyto přepínače popisujeme v tabulkách rozdělených
+podle jejich funkce.
+\Cref{tab:prepinace_pomocne} popisuje pomocné přepínače programu, 
+\cref{tab:prepinace_soubory} popisuje přepínače pro specifikování vstupních a 
+výstupních souborů, \cref{tab:prepinace_simulace} popisuje přepínače pro volbu
+parametrů simulace, \cref{tab:prepinace_optimalizace} popisuje přepínače pro 
+volbu obecných vlastností typických pro všechny optimalizační metody,
+\cref{tab:prepinace_greedy} popisuje přepínače pro volbu parametrů hladové optimalizace,
+\cref{tab:prepinace_genetic}, popisuje přepínače pro volbu parametrů optimalizace genetickým
+algoritmem, \cref{tab:prepinace_kmeans} popisuje přepínače pro volbu parametrů optimalizace
+pomocí algoritmu k-means a \cref{tab:prepinace_volba_optim} popisuje přepínače pro volbu
+optimalizační metody.
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.15\linewidth} p{0.75\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{help} & Vypíše všechny možnosti parametrů programu. \\
+\texttt{logs} & Program bude vypisovat podrobné informace o průběhu simulace 
+(pro ladění progamu). \\
+\bottomrule
+\end{tabular}
+\caption{Popis pomocných přepínačů v programu.}
+\label{tab:prepinace_pomocne}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.30\linewidth} p{0.6\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{nodeCityFile arg} & Cesta k vstupnímu souboru s reprezentací křižovatek. 
+V případě nespecifikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/combined\_nodes.txt} \\
+\texttt{edgesFile arg} & Cesta k vstupnímu souboru s reprezentací silnic.
+V případě nespecifikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/edges.txt} \\
+\texttt{citiesFile arg} & Cesta k vstupnímu souboru s reprezentací měst. 
+V případě nespecifikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/cities.txt} \\
+\texttt{addedEdgesFile arg} & Cesta k výstupnímu souboru pro uložení reprezentace 
+přidaných hran pro vytvoření souvislého grafu. 
+V případě nespecikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/added\_edges.txt} \\
+\texttt{preparedNodesFile arg} & Cesta k výstupnímu souboru pro uložení reprezentace
+vrcholů upraveného grafu po eliminaci vrcholů stupně 2.
+V případě nespecikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/prepared\_combined\_nodes.txt} \\
+\texttt{preparedEdgesFile arg} & Cesta k výstměupnímu souboru pro uložení reprezentace
+hran upraveného grafu po eliminaci vrcholů stupně 2 
+V případě nespecikované hodnoty je zvolena cesta:
+\texttt{prepared\_graph/prepared\_edges.txt}\\
+\texttt{savePrepared} & Parametr specifikující, zda uložit předpřipravenou 
+reprezentaci mapy. \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování vstupních a výstupních souborů.}
+\label{tab:prepinace_soubory}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.43\linewidth} p{0.5\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{simulationTime arg} & Doba simulace v minutách. \\
+\texttt{segmentLength arg} & Délka hrany grafu v kilometrech. \\
+\texttt{numClosestStations arg} & Počet nabíjecích stanic, které jsou zvažovány 
+    při plánování cesty vozidla na nabíjecí stanici. \\
+\texttt{carConsumption} & Spotřeba baterie vozidla v procentech kapacity za minutu. \\
+\texttt{numStations arg} & Celkový počet nabíjecích stanic v simulaci. \\
+\texttt{stationCapacity arg} & Počet nabíjecích slotů na každé stanici. \\
+\texttt{exponentialLambdaCities arg} & Parametr pro generování cílového města vozidla.
+    Hodnota je rovna $\frac{1}{d}$, kde $d$ je střední hodnota vzdálenosti 
+    cílového města od startu v kilometrech. \\
+\texttt{exponentialLambdaDepartures arg} & Parametr pro generování času výjezdu
+    následujícího vozidla. Hodnota je rovna $\frac{1}{t}$, kde $t$ je střední 
+    hodnota času následujícího výjezdu vozidla v minutách. \\
+\texttt{endCityRatio arg} & Parametr specifikující důležitost vzdálenosti cílového
+    města vůči počtu obyvatel při generování cílového města 
+    (viz. \cref{def:pravdepodobnost_ciloveho_mesta}). Pokud $<1$, pak je
+    počet obyvatel důležitější. Pokud $=1$, pak jsou oba parametry stejně důležité.
+    Pokud $>1$, pak je důležitější vzdálenost města. \\
+\texttt{batteryTresholdLambda arg} & Hodnota $\frac{1}{b}$, kde $b$ je střední 
+    hodnota hladiny baterie specifikující, o kolik průměrně převyšuje hladina baterie v době
+    rozhodnování nejnižší možnou hranici pro rozhodnutí, zda jet nabíjet, v moment rozhodnutí
+    (viz. \cref{subsec:zajizdeni_na_nabijecku}). \\
+\texttt{carBatteryMean arg} & Střední hodnota počáteční hladiny baterie. \\
+\texttt{carBatteryDeviation arg} & Směrodatná odchylka počáteční hladiny baterie vozidla. \\
+\texttt{carStartBatteryBottomLimit arg} & Minimální hladina baterie vozidla při výjezdu. \\
+\texttt{chargingTreshold arg} & Nejnižší možná hladina baterie pro rozhodnutí,
+    zda vyrazit na nabíjecí stanici (viz. \cref{subsec:zajizdeni_na_nabijecku}). \\
+\texttt{notChargingTreshold arg} & Nejvyšší hladina pro rozhodnutí, zda vyrazit na 
+    nabíjecí stanici (viz. \cref{subsec:zajizdeni_na_nabijecku}). \\
+\texttt{batteryTolerance arg} & Nejnižší možná očekávaná hladina baterie v cíli, 
+    kdy se při rozhodování, rozhodnout nezajet na nabíjecí stanici 
+    (viz. \cref{subsec:zajizdeni_na_nabijecku}). \\
+\texttt{carVelocity arg} & Průměrná rychlost všech vozidel v kilometrech za minutu. \\
+\texttt{chargingWaitingTime arg} & Doba čekání na úplné nabití baterie v minutách.  \\
+\texttt{meanChargingLevel arg} & Očekávaná střední hodnota hladiny baterie, jež
+    je nabíjena na nabíjecích stanicích (pro odhad doby čekání nabíjení ve frontě).  \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování parametrů simulátoru.}
+\label{tab:prepinace_simulace}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.42\linewidth} p{0.51\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{lossDifferenceTreshold arg} & Minimální rozdíl ztrátové funkce pro 
+pokračování v optimalizaci (pro vybrané optimalizační metody). \\
+\texttt{stationNumberParameter arg} & Parametr počtu stanic při výpočtu ztrátové 
+funkce (viz. \cref{sec:loss}).\\
+\texttt{runDownParameter arg} & Parametr počtu vozidel, kterým se vybila baterie,
+pro výpočet ztrátové funkce (viz. \cref{sec:loss}).\\
+\texttt{durationParameter arg} & Parametr průměrné doby cestování v minutách pro
+výpočet ztrátové funkce (viz. \cref{sec:loss}).\\
+\texttt{batteryDifferenceParameter arg} & Parametr průměrného rozdílu hladin 
+baterie pro výpočet ztrátové funkce (viz. \cref{sec:loss}).\\
+\texttt{waitingTimesParameter arg} & Parametr průměrné čekací doby na nabíjecích
+stanicích pro výpočet ztrátové funkce (viz. \cref{sec:loss}).\\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování obecných vlastností optimalizace.}
+\label{tab:prepinace_optimalizace}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.35\linewidth} p{0.58\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{greedyMaxIterations arg} & Maximální počet iterací algoritmu. \\
+\texttt{greedyNumThrowAway arg} & Maximální rozdíl počtu stanic mezi iteracemi algoritmu. \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování parametrů hladové optimalizace (viz. \cref{sec:greedy}).}
+\label{tab:prepinace_greedy}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.52\linewidth} p{0.41\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{geneticPopulatioSize arg} & Velikost populace. \\
+\texttt{geneticNumGenerations arg} & Počet generací. \\
+\texttt{geneticNumBestSelection arg} & Počet nejlepších jedinců pro zkopírování
+    do následující generace. \\
+\texttt{geneticTournamentSelectionTreshold arg} & Pravděpodobnost výběru lepšího
+    jedince v turnajové selekci. \\
+\texttt{geneticMutationTreshold arg} & Pravděpodobnost mutace nabíjecí stanice. \\
+\texttt{geneticMemberSizeVariance arg} & Směrodatná odchylka rozdílu velikosti 
+    nového jedince a jeho rodiče pro mutaci velikosti jedince. \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování parametrů optimalizace genetickým algorimem
+    (viz. \cref{sec:genetic_optim}).}
+\label{tab:prepinace_genetic}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.46\linewidth} p{0.47\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{kMeansNumIterationsOneRun arg} & Počet iterací jednoho běhu algorimu k-means. \\
+\texttt{kMeansNumGenerations arg} & Počet generací modelů. \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro specifikování parametrů optimalizace algoritmem k-means 
+    (viz. \cref{sec:kmeans_optim}).}
+\label{tab:prepinace_kmeans}
+\end{table}
+
+
+\begin{table}
+\centering\footnotesize\sf
+\begin{tabular}{p{0.17\linewidth} p{0.76\linewidth}}
+\toprule
+Příkaz & Popis funkce \\
+\midrule
+\texttt{randomModels} & Spustí pevný počet simulací na modelech s náhodně 
+rozmístěnými nabíjecími stanicemi. \\
+\texttt{greedy} & Spustí optimalizaci hladovým algoritmem. \\
+\texttt{genetic} & Spustí optimalizaci genetickým algorimem. \\
+\texttt{kMeans} & Spustí optimalizaci algoritmem K-Means. \\
+\bottomrule
+\end{tabular}
+\caption{Popis přepínačů pro volbu optimalizační metody.}
+\label{tab:prepinace_volba_optim}
+\end{table}
+
+
+\subsection{Příklad spouštění programu}
+V této sekci uvádíme příklad spuštění programu se vstupními soubory. Po řadě pro
+křižovatky, silnice a města s názvy:
+\begin{Verbatim}
+    prepared_graph/combined_nodes.txt
+    prepared_graph/edges.txt
+    prepared_graph/cities.txt
+\end{Verbatim}
+
+Dále uvádíme výstupní soubory. Po řadě pro soubor s nově přidanými hranami
+po sloučení komponent souvislosti, pro reprezentaci vrcholů z předpřipraveného grafu 
+a pro reprezentaci hran z předpřipraveného grafu:
+\begin{Verbatim}
+    prepared_graph/added_edges.txt, 
+    prepared_graph/prepared_nodes_new.txt
+    prepared_graph/prepared_edges_new.txt
+\end{Verbatim}
+
+Dále v tomto příkladě volíme čas simulace 100 minut, celkový počet stanic 300 a
+počet generací genetického algoritmu 3. Nakonec specifikujeme, že chceme spustit 
+optimalizaci genetickým algoritmem a uložit předpřipravenou mapu. Další parametry
+jsou zvoleny automaticky, podle výchozí hodnoty nastavené v programu, kterou lze
+dohledat příkazem:
+
+\begin{Verbatim}
+    ./Traffic_Simulator --help
+\end{Verbatim}
+
+Optimalizaci na parametrech popsaných výše spustíme příkazem:
+
+\begin{Verbatim}
+./Traffic_Simulator \
+--nodeCityFile="prepared_graph/combined_nodes.txt" \
+--edgesFile="prepared_graph/edges.txt" \
+--citiesFile="prepared_graph/cities.txt" \
+--addedEdgesFile="prepared_graph/added_edges.txt" \
+--preparedNodesFile="prepared_graph/prepared_combined_nodes_new.txt" \
+--preparedEdgesFile="prepared_graph/prepared_edges_new.txt" \
+--simulationTime=100 \
+--numStations=300 \
+--geneticNumGenerations=3 \
+--genetic \
+--savePrepared
+\end{Verbatim}
+
+
+Pokud zvolíme vstupní soubory (křižovatek, silnic a města):
+
+\begin{Verbatim}
+    prepared_graph/prepared_combined_nodes.txt
+    prepared_graph/prepared_edges.txt
+    prepared_graph/cities.txt
+\end{Verbatim}
+
+Pokud nechceme ukládat předpřipravenou podobu grafu a parametry volíme stejně jako v minulém
+případě, pak příkaz pro spuštění vypadá následovně:
+
+\begin{Verbatim}
+    ./Traffic_Simulator \
+    --nodeCityFile="prepared_graph/prepared_combined_nodes.txt" \
+    --edgesFile="prepared_graph/prepared_edges.txt" \
+    --citiesFile="prepared_graph/cities.txt" \
+    --simulationTime=100 \
+    --numStations=300 \
+    --geneticNumGenerations=3 \
+    --genetic 
+\end{Verbatim}
+
+
+\section{Výstup programu}
+První část výstupu programu je vždy výpis použitých parametrů. Část tohoto
+výpisu může vypadat například následovně:
+
+\begin{Verbatim}
+Save prepared is: 0
+Edges: prepared_graph/prepared_edges.txt
+Node City: prepared_graph/prepared_combined_nodes.txt
+Cities: prepared_graph/cities.txt
+Simulation time: 1000
+Length of the edge segment: 1
+Number of closest stations: 10
+Car consumtion: 0.001
+Number of charging stations: 500
+Capacity of the charging station: 1
+...
+\end{Verbatim}
+
+Následuje část kontrolních zpráv o procesu eliminace křižovatek stupně 2. 
+Program vždy po eliminaci 10000 křižovatek stupně 2 vypíše
+informaci o úspěšném průběhu procesu eliminace křižovatek. 
+Příklad tohoto výpisu může vypadat následovně:
+
+\begin{Verbatim}
+Iteration: 0 Vertices of degree 2 merged and deleted.
+Iteration: 10000 Vertices of degree 2 merged and deleted.
+Iteration: 20000 Vertices of degree 2 merged and deleted.
+Iteration: 30000 Vertices of degree 2 merged and deleted.
+Iteration: 40000 Vertices of degree 2 merged and deleted.
+Iteration: 50000 Vertices of degree 2 merged and deleted.
+Iteration: 60000 Vertices of degree 2 merged and deleted.
+Iteration: 70000 Vertices of degree 2 merged and deleted.
+Iteration: 80000 Vertices of degree 2 merged and deleted.
+Iteration: 90000 Vertices of degree 2 merged and deleted.
+Iteration DONE
+\end{Verbatim}
+
+
+Dále následuje posloupnost kontrolních zpráv o slučování komponent 
+souvislosti, která je zakončena informací o spuštění zvolené optimalizační metody. 
+Tato posloupnost může vypadat následovně (pro spuštění hladové optimalizační
+metody):
+
+\begin{Verbatim}
+Total number of components: 16
+Total number of components: 15
+Total number of components: 14
+Total number of components: 13
+Total number of components: 12
+Total number of components: 11
+Total number of components: 10
+Total number of components: 9
+Total number of components: 8
+Total number of components: 7
+Total number of components: 6
+Total number of components: 5
+Total number of components: 4
+Total number of components: 3
+Total number of components: 2
+Total number of components: 1
+Running greedy algorithm.
+\end{Verbatim}
+
+Dále následuje výpis kontrolních zpráv o běhu simulace po každých 
+10 odsimulovaných minutách, který je zakončen výsledky simulace a informací
+o hodnotě ztrátové funkce. Tento výpis se periodicky opakuje pro každou
+spuštěnou simulaci. 
+Níže uvádíme příklad výpisu jednoho běhu simulace pro dobu 100 minut.
+
+\begin{Verbatim}
+Time 10 elapsed!
+Time 20 elapsed!
+Time 30 elapsed!
+Time 40 elapsed!
+Time 50 elapsed!
+Time 60 elapsed!
+Time 70 elapsed!
+Time 80 elapsed!
+Time 90 elapsed!
+Time 100 elapsed!
+Number of stations: 500
+Number of run down batteries: 654393
+Average traveling duration: 98.0642
+Average battery difference between start and end: -0.345312
+Average waiting times in charging station: 165.868
+------------------------------------------------------
+Model loss: 6.54896e+07
+\end{Verbatim}
+
+Po skončení všech simulací je program zakončen finálním výpisem informací o
+modelu s nejmenší hodnotou ztrátové funkce, nebo v případě volby 
+\texttt{randomModels} výpisem aritmetického průměru hodnot popisující vlastnosti simulace.
+
+Speciálním případem je optimalizace za pomoci genetického algoritmu, kde jsou
+před finálním výpisem vypsány hodnoty ztrátové funkce všech modelů použitých v průběhu
+optimalizace. Část finálního výpisu genetického algoritmu před výpisem informací o nejlepším
+modelu může pro 3 generace a velikost populace 3 vypadat následovně:
+
+\begin{Verbatim}
+Algorithm finished
+Losses for the generation: 0
+Loss: 7.58681e+07
+Loss: 7.5309e+07
+Loss: 7.55552e+07
+Losses for the generation: 1
+Loss: 7.44727e+07
+Loss: 7.56497e+07
+Loss: 7.46101e+07
+Losses for the generation: 2
+Loss: 7.55472e+07
+Loss: 7.50069e+07
+Loss: 7.56775e+07
+
+Total best loss is: 7.44727e+07
+\end{Verbatim}
+
+Finální výpis nejlepších výsledků všech optimalizačních metod může vypadat následovně:
+
+\begin{Verbatim}
+Best model info:
+------------------------------------------------------
+Number of stations: 101
+Number of run down batteries: 733511
+Average traveling duration: 100.09
+Average battery difference between start and end: -0.34632
+Average waiting times in charging station: 203.302
+------------------------------------------------------
+Model loss: 7.33615e+07
+\end{Verbatim}
+
+Tento výpis nám říká, že v nejlepším modelu bylo použito $101$ nabíjecích stanic,
+počet vozidel, kterým došla baterie je $733511$, průměrná doba cestování vozidla
+v minutách je $100.09$, průměrný rozdíl počáteční a koncové hladiny baterie je 
+$-0.34632$ (záporná hodnota znamená, že vozidlo dojelo do cíle s vyšší hladinou
+baterie, než s jakou vyjíždělo), průměrný čas čekání vozidel na nabíjecích stanicí
+než se dostanou na řadu je $203.302$ a nakonec hodnota ztrátové funkce modelu
+je $7.33615e+07$.

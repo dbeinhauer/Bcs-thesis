@@ -1,0 +1,107 @@
+
+
+%%% Choose a language %%%
+
+\newif\ifEN
+% \ENtrue   % uncomment this for english
+\ENfalse   % uncomment this for czech
+
+%%% Configuration of the title page %%%
+
+\def\ThesisTitleStyle{mff} % MFF style
+%\def\ThesisTitleStyle{cuni} % uncomment for old-style with cuni.cz logo
+%\def\ThesisTitleStyle{natur} % uncomment for nature faculty logo
+
+\def\UKFaculty{Faculty of Mathematics and Physics}
+%\def\UKFaculty{Faculty of Science}
+
+\def\UKName{Charles University in Prague} % this is not used in the "mff" style
+
+% Thesis type names, as used in several places in the title
+\def\ThesisTypeTitle{\ifEN BACHELOR THESIS \else BAKALÁŘSKÁ PRÁCE \fi}
+%\def\ThesisTypeTitle{\ifEN MASTER THESIS \else DIPLOMOVÁ PRÁCE \fi}
+%\def\ThesisTypeTitle{\ifEN RIGOROUS THESIS \else RIGORÓZNÍ PRÁCE \fi}
+%\def\ThesisTypeTitle{\ifEN DOCTORAL THESIS \else DISERTAČNÍ PRÁCE \fi}
+\def\ThesisGenitive{\ifEN bachelor \else bakalářské \fi}
+%\def\ThesisGenitive{\ifEN master \else diplomové \fi}
+%\def\ThesisGenitive{\ifEN rigorous \else rigorózní \fi}
+%\def\ThesisGenitive{\ifEN doctoral \else disertační \fi}
+\def\ThesisAccusative{\ifEN bachelor \else bakalářskou \fi}
+%\def\ThesisAccusative{\ifEN master \else diplomovou \fi}
+%\def\ThesisAccusative{\ifEN rigorous \else rigorózní \fi}
+%\def\ThesisAccusative{\ifEN doctoral \else disertační \fi}
+
+
+
+%%% Fill in your details %%%
+
+% (Note: \xxx is a "ToDo label" which makes the unfilled visible. Remove it.)
+\def\ThesisTitle{Optimalizace rozmístění stanic pro nabíjení elektrických vozidel}
+\def\ThesisAuthor{David Beinhauer}
+\def\YearSubmitted{2022}
+
+% department assigned to the thesis
+\def\Department{Katedra teoretické informatiky a matematické logiky}
+% Is it a department (katedra), or an institute (ústav)?
+\def\DeptType{Katedra}
+
+\def\Supervisor{Mgr. Martin Pilát, Ph.D.}
+\def\SupervisorsDepartment{Katedra teoretické informatiky a matematické logiky}
+
+% Study programme and specialization
+\def\StudyProgramme{Informatika}
+\def\StudyBranch{Informatika se specializací Umělá inteligence}
+
+\def\Dedication{%
+Rád bych poděkoval panu Mgr. Martinu Pilátovi, Ph.D. za odborné vedení
+mé práce, cenné rady a vstřícnost při konzultacích a vypracování bakalářské práce. 
+Dále bych rád poděkoval členům své rodiny a přátelům za podporu během psaní
+bakalářské práce.
+}
+
+\def\AbstractEN{As the number of electric vehicles grows, so does the need to create a suitable
+network of charging stations. A solution of this problem can be significantly
+improved by the usage of suitable optimization techniques.
+We implement a simplified traffic simulator serving as a suitable tool for 
+their analysis.
+We also analyze optimization techniques using the so-called greedy algorithm,
+genetic algorithm and k-means algorithm. Based on the experiments, the optimizations 
+using the genetic algorithm and the greedy algorithm showed noticeably better results.
+The k-means method did not show signs of results better than a
+random approach.
+}
+
+\def\AbstractCS{S rostoucím počtem elektrických vozidel roste i potřeba vytvořit vhodnou 
+infrastrukturu pro jejich nabíjení. K řešení tohoto problému může výrazně 
+napomoci použití vhodných optimalizačních metod. V práci jsme implementovali 
+zjednodušený simulátor dopravy sloužící jako vhodný nástroj pro jejich analýzu.
+Analyzovali jsme také optimalizační metody tzv. hladovým algoritmem, 
+genetickým algoritmem a algoritmem k-means. Na základě experimentů 
+vykazovala prokazatelně lepší výsledky optimalizace za využití 
+genetického algoritmu a hladová optimalizace. K-means optimalizace 
+nevykazovala známky lepších výsledků oproti náhodnému přístupu.
+}
+
+% 3 to 5 keywords (recommended), each enclosed in curly braces.
+% Keywords are useful for indexing and searching for the theses by topic.
+\def\Keywords{{optimalizace}, {simulátor dopravy}, {k-means}, {genetický algoritmus}
+}
+
+% If your abstracts are long and do not fit in the infopage, you can make the
+% fonts a bit smaller by this setting. (Also, you should try to compress your abstract more.)
+% Alternatively, consider increasing the size of the page by uncommenting the
+% geometry modification in thesis.tex.
+\def\InfoPageFont{}
+%\def\InfoPageFont{\small}  %uncomment to decrease font size
+
+\ifEN\relax\else
+% If you are writing a czech thesis, you additionally need to fill in the
+% english translation of the metadata here!
+\def\ThesisTitleEN{Optimization of the Placement of Electric Vehicle Charging Stations}
+\def\DepartmentEN{Department of Theoretical Computer Science and Mathematical Logic}
+\def\DeptTypeEN{Department}
+\def\SupervisorsDepartmentEN{Department of Theoretical Computer Science and Mathematical Logic}
+\def\StudyProgrammeEN{Computer Science}
+\def\StudyBranchEN{Computer Science with specialisation in Artificial Intelligence}
+\def\KeywordsEN{{optimization}, {traffic simulator}, {k-means}, {genetic algorithm}}
+\fi

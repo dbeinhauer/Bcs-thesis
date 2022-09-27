@@ -1,0 +1,60 @@
+\chapter{Úpravy v programu}
+
+\section{Oprava načítání mapy}
+V programu z adresáře \texttt{map\_preprocessing} jsme opravili chybu v převodu
+jednotek u délek jednotlivých silnic. A vytvořili opravené vstupní soubory simulátoru 
+z adresáře \texttt{prepared\_map}. V opravené reprezentaci jsou již v souborech 
+\texttt{edges.txt} a \texttt{prepared\_edges.txt} uloženy vzdálenosti v kilometrech.
+
+Dále jsme při extrakci mapy z OpenStreetMaps pomocí nástroje Osmium zahrnuli do 
+výběru silnic, také silnice reprezentující nájezdy a výjezdy z dálnic, silnic pro
+motorová vozidla a silnic 1. třídy (přidáním silnic typu, jehož postfix je \texttt{\_link}).
+Opravená mapa již obsahuje sjezdy a nájezdy na zvolené typy silnic.
+Takto upravená silniční síť má po odstranění vrcholů stupně 2, celkem $8477$ vrcholů a 
+$10906$ hran. Mapa se rozpadá na 22 komponent souvislosti. Rozpad je způsoben malými úseky 
+silnic v pohraničních oblastech, které byly vlivem extrakce mapy odpojeny od silniční sítě.
+S malými komponentami souvislosti nakládáme stejně jako v původní variantě 
+(napojíme je k nejbližšímu vrcholu).
+
+\section{Úpravy v simulátoru}
+\label{sec:upravy}
+V simulátoru jsme z důvodu lepší výpočetní efektivity změnili způsob výběru nabíjecí stanice.
+V nové variantě si před začátkem simulace předpočítáme nejbližší nabíjecí stanici pro
+každou křižovatku v silniční síti. V momentě, kdy se vozidlo rozhodne jet na nabíjecí stanici,
+přeplánuje trasu tak, aby mířilo na předpočítanou nejbližší nabíjecí stanici od křižovatky, 
+v níž se aktuálně nachází. Původní variantu lze zprovoznit odkomentováním označených úseků
+v souboru \texttt{Map.cpp}.
+
+Dále jsme v optimalizaci pomocí k-means zjednodušili výpočet vah křižovatek. V nové 
+implementaci je váha křižovatky rovna součtu průměrných hladin baterie potřebných pro nabití vozidla
+na přilehlých silnicích. Změnu jsme provedli, neboť jsme při spuštění optimalizační metody
+narazili na přetékání vah z důvodu velmi malých hodnot.
+
+Navíc jsme řádně přenastavili základní nastavení, které je nyní nastaveno na nastavení
+simulátoru používané v experimentech.
+
+Také jsme narazili na chybu ve výpisu doby trvání jedné trasy, proto v optimalizaci naprosto
+vynecháváme tento parametr (ve výpočtu loss funkce).
+
+
+\subsection{Informace o simulaci}
+Do simulátoru jsme navíc přidali výpis dalších informací pro podrobnější popis výsledků simulace. 
+Mezi přidané informace patří informace vytížení jednotlivých nabíjecích stanic (počet zákazníků
+a průměrná doba čekání vozidel ve frontě na stanici). 
+
+Dále jsme přidali výpis počtu vozidel, které ukončily cestu. Dojezd do cílové destinace a návrat 
+z cílové destinace do počátku považujeme
+za 2 různé cesty. Každé vozidlo by tedy v ideálním případě mělo přispět do tohoto počtu dvakrát.
+Vyjímkou jsou vozidla, které se vybily, či nestihly dojet do cíle před skončením simulace.
+Tyto vozidla do tohoto počtu nepřispívají. Na konci simulace by tedy tento počet měl být roven 
+přibližně dvojnásobku všech vygenerovaných vozidel.
+
+Mezi další přidané informace patří počet vozidel, které nestihly dojet do cíle před 
+doběhnutím simulace, počet vozidel, jež se vybily během cesty na nabíjecí stanici, a 
+celkový počet vozidel, které nedorazily do cílové destinace (vybily se nebo skončila simulace).
+
+Nakonec jsme dodali také podrobnější přehled o všech nabíjecích stanicích. Přidali jsme
+informaci o počtu stanic, které byly aspoň jednou během simulace využity a výpis počtu zákazníků 
+a průměrné doby nabíjení na jednotlivých stanicích.
+
+

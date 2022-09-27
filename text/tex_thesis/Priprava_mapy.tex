@@ -1,0 +1,119 @@
+\chapter{Příprava mapy silniční sítě}
+\label{chap:priprava_mapy}
+
+Hlavní motivací pro vytvoření simulátoru dopravy je vytvoření uživatelsky
+přívětivého prostředí pro práci s různými variantami rozmístění nabíjecích 
+stanic na reálné dopravní síti. Je tedy více než žádoucí pracovat s reprezentací
+reálné silniční sítě. K tomuto účelu používáme volně dostupné mapy formátu
+\texttt{.osm.pbf} ze serveru 
+Geofabric\footnote{\url{https://download.geofabrik.de/}}. 
+
+V této kapitole popisujeme jakým způsobem lze zmíněné mapy upravit do formátu
+požadovaného naším simulátorem a poukazujeme na důležité poznatky této problematiky. 
+V našich experimentech pracujeme s reprezentací mapy 
+České republiky\footnote{\url{https://download.geofabrik.de/europe/czech-republic.html}},
+která je přiložena k práci v již požadovaném formátu simulátoru a pro správné spuštění
+simulátoru tak postupy popsané v této kapitole nejsou nutné. 
+
+
+\section{Extrakce dopravní sítě}
+\label{sec:extrakce_site}
+
+V této sekci popisujeme proces extrakce dopravní sítě z mapy formátu 
+\texttt{.osm.pbf} do formátu požadovaného našim simulátorem a poukazujeme
+na specifické aspekty námi zvolené mapy pro analýzu optimalizačních metod.
+
+
+\subsection{Extrakce s pomocí nástroje Osmium}
+
+Soubory formátu \texttt{.osm.pbf} obsahují mimo informace o dopravní síti,
+také velké množství informací irelevantních pro funkci našeho simulátoru. 
+Důsledkem této skutečnosti je několikanásobně vyšší množství dat pro 
+zpracování, což mimo jiné vede k vyšší paměťové i časové náročnosti programu.
+Je tak žádoucí všechny nepotřebné informace odstranit. K tomuto účelu
+používáme nástroj \texttt{Osmium}\footnote{\url{https://osmcode.org/osmium-tool/}}.
+S jehož pomocí jsme schopni z mapy vyextrahovat silniční síť a zároveň
+vybrat pouze námi zvolené druhy silnic.
+
+\subsubsection{Dodatek k výběru druhů silnic}
+Mezi zvolené typy silnic, které náš simulátor rozeznává, patří 
+dálnice, silnice pro motorová vozidla a silnice první třídy (v kontextu
+dat se jedná o typy \texttt{motorway}, \texttt{trunk} a \texttt{primary}).
+Silnice nižších tříd jsme zanedbali, neboť předpokládáme, že výše zmíněné 
+silnice tvoří souvislý graf, případně, že jsou rozděleny do relativně nízkého 
+počtu komponent souvislosti a dostatečně aproximují zkoumanou dopravní síť.
+S ohledem na skutečnost, že v reálném případě je silniční síť v naprosté většině
+případů souvislý graf, je žádoucí minimalizovat rozpad dopravní sítě na 
+komponenty souvislosti. V našem případě je graf rozdělen do 75 komponent 
+souvislosti, což se jeví jako poměrně vysoké číslo a vyvolává pochybnosti,
+zda je naše volba typů silnic vhodná. Vysoký počet komponent si odůvodňujeme
+výběrem mapy pokrývající pouze výřez reálné oblasti, což může vézt k rozpadu
+silniční sítě na více komponent souvislosti především v hraničních oblastech.
+
+Významným faktorem podněcujícím k eliminaci silnic nižší třídy je fakt, že
+s klesající třídou silnic typicky několikanásobně roste jejich počet. Výsledný
+graf je pak mnohonásobně hustší, což vede k vyšší výpočetní náročnosti celého
+simulátoru, případně na méně výkonných strojích k nepoužitelnosti simulátoru
+z časových i paměťových důvodů. V našem případě vzrostl počet hran grafu při
+zahrnutí silnic 2. třídy asi pětinásobně. 
+
+Předpokládáme, že neexistuje mnoho hustě osídleným oblastí v simulované oblasti,
+které bychom takto vyloučili ze simulace. Jelikož předpokládáme, že hustěji
+osídlené oblasti mají v blízkém okolí přístup k silnicím vyšších tříd. 
+Nevýhodou tohoto přístupu je zanedbání realistické reprezentace sítě na úrovni
+jednotlivých měst, či malých oblastí. Nemůžeme tak dostatečně realisticky 
+simulovat například průjezdy vozidel křižovatkou, dopravní zácpy ve městech apod.
+Zároveň jsme omezeni na cesty vozidel vedoucích pouze po silnicích vyšší třídy. 
+Předpokládáme však že tato omezení nejsou s ohledem
+na námi řešený problém nijak závažná, neboť nás zajímají především dálkové 
+cesty, během nichž je častější potřeba řidiče použít nabíjecí stanici.
+
+
+\subsubsection{Extrakce měst}
+
+Pro dosažení co nejrealističtějších výsledků simulace je potřeba vhodně
+generovat počáteční a cílové pozice vozidel. K tomuto účelu nám slouží informace
+o pozicích a počtu obyvatel osídlených oblastí na mapě. 
+Pro získání těchto informací nám znovu poslouží nástroj \texttt{Osmium}. 
+S jeho pomocí získáváme informace o městech (oblasti označené jako \texttt{city}
+nebo \texttt{town}). 
+
+Vynechali jsme menší osídlené oblasti, jelikož předpokládáme, že
+počet výjezdů a cílů cesty je v této oblastí zanedbatelný. Navíc je počet
+menších celků vysoký a jejich zahrnutí by vyžadovalo více výpočetního výkonu.
+
+
+\subsection{Příprava dat pomocným skriptem}
+
+Postupy popsanými výše jsme získané informace zásadně zredukovali. Veškerá 
+vyfiltrovaná data jsou ale stále ve formátu \texttt{osm.pbf}, který musíme 
+vhodným způsobem zpracovat a odstranit nepotřebné informace o silnicích
+a obytných oblastech. K tomuto účelu jsme využili knihovny programovacího
+jazyka Python \texttt{Pyrosm}\footnote{\url{https://pyrosm.readthedocs.io/en/latest/}}.
+A naimplementovali program v jazyce Python, jenž načte data ze souborů ve formátu
+\texttt{osm.pbf} a náležitě je upraví do podoby vstupních souborů našeho 
+simulátoru dopravy. Podrobnější informace k přípravě dat i veškeré programy 
+jsou dodány v příloze v adresáři \texttt{map\_processing}. 
+
+
+\section{Dodatek k volbě programovacího jazyka a nutnosti předpřípravy dat}
+
+Pro správné fungování simulátoru není práce s nástroji popsanými v sekci (\cref{sec:extrakce_site}).
+nutná (je například možné pracovat s ručně připravenou reprezentací
+dopravní sítě a nerešit jakoukoli přípravu dat z reálných map).
+
+Reprezentace mapy ve formátu \texttt{osm.pbf} je obecně velmi rozšířená, což má za 
+následek existenci početné skupiny knihoven (především v jazyce Python), jež umí
+s těmito soubory pracovat a vhodným způsobem je zpracovávat. Zároveň existuje 
+řada knihoven programovacího jazyka Python, které nabízejí širokou
+škálu funkcionalit pro práci s grafy a grafovými algoritmy. 
+Může nám tedy připadat kontraproduktivní pracovat s několika různými 
+nástroji pro předpřípravu dat a pracovat s více programovacími jazyky, 
+když lze většinu funkcionalit pokrýt programem napsaným v jazyce Python s 
+využitím vhodných knihoven. 
+Původním cílem práce bylo zvolit tento přístup. Během práce na simulátoru 
+jsme však narazili na vysokou paměťovou i časovou náročnost tohoto postupu
+a upustili jsme od něj.  
+Na základě těchto skutečností jsme se nakonec rozhodli v jazyce Python 
+pouze předzpracovat data a zbytek simulátoru naimplementovat v 
+jazyce C++ s využitím knihovny \texttt{boost}\footnote{\url{https://www.boost.org/}}.

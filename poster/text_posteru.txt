@@ -1,0 +1,38 @@
+# Optimalizace rozmístění stanic pro nabíjení elektrických vozidel
+
+# David Beinhauer, MFF UK, 2022
+
+## Úvod
+S rostoucím počtem elektrických vozidel roste i potřeba vytvořit vhodnou
+infrastrukturu pro jejich nabíjení. K řešení tohoto problému může výrazně
+napomoci použití vhodných optimalizačních metod. Cílem práce je implementovat simulátor dopravy sloužící jako vhodný nástroj pro jejich návrh a analýzu.
+
+## Technologie
+Simulátor dopravy a optimalizační metody jsou naimplementovány v jazyce C++. Zpracování vstupních a výstupních dat je napsáno v jazyce Python.
+
+## Poděkování
+Rád bych poděkoval panu Mgr. Martinu Pilátovi, Ph.D. za odborné vedení mé
+práce, cenné rady a vstřícnost při vypracování této práce.
+
+Informace
+Kontakt: david.beinhauer@email.cz
+Vedoucí bakalářské práce: 
+ Mgr. Martin Pilát, Ph.D., 
+Katedra teoretické informatiky 
+a matematické logiky 
+
+Simulátor
+Dopravní síť reprezentujeme grafem, který lze vytvořit z libovolné dopravní sítě uložené ve formátu 
+.osm.pbf z Open Street Map.
+K simulaci dopravy používáme diskrétní simulaci. Návrh simulátoru je zaměřen na dálkové trasy, neboť předpokládáme, že vozidla mají možnost dobití v cílové destinaci. V simulátoru je nastavitelná řada parametrů pro nastavení vlastností simulace. 
+
+Optimalizační metody
+Cílem optimalizací je minimalizovat počet použitých stanic, vybitých vozidel, průměrné doby cesty vozidel, rozdílu hladin na začátku a konci cesty a doby čekání na nabíjecích stanicích. Kvalitu řešení popisuje ztrátová funkce, která je lineární kombinací těchto parametrů. V práci porovnáváme 3 optimalizační metody (hladovou, genetickým algoritmem a algoritmem k-means).
+Hladový přístup
+V hladovém přístupu náhodně rozmístíme stanice. Ty, které byly během simulace někdy použity jsou ponechány, zbylé stanice jsou buď vyřazeny z modelu, nebo jsou nahrazeny náhodně vygenerovanou stanicí.
+
+Optimalizace genetický algoritmem
+V optimalizaci genetickým algoritmem reprezentujeme jedince jako jedno rozmístění nabíjecích stanic na mapě a aplikujeme na nich vhodné techniky genetického algoritmu.
+
+Optimalizace algoritmem k-means
+V optimalizaci algoritmem k-means vhodně generujeme body v částech dopravní sítě v závislosti na průměrné hladině baterie. Výsledné centroidy jsou pak nové pozice stanic. 
