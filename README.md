@@ -6,13 +6,13 @@ This repository contains the LaTeX sources for my bachelor thesis.
 
 Repository content.
 * For download **thesis** as 
-[.pdf here](https://raw.githubusercontent.com/dbeinhauer/bcs-thesis/main/text/thesis.pdf) 
+[.pdf here](https://raw.githubusercontent.com/dbeinhauer/bcs-thesis/main/text/tex_thesis/thesis.pdf) 
 or online 
-[through github](https://github.com/dbeinhauer/bcs-thesis/blob/main/text/thesis.pdf).
+[through github](https://github.com/dbeinhauer/bcs-thesis/blob/main/text/tex_thesis/thesis.pdf).
 * For download **errata** as 
-[.pdf here](https://raw.githubusercontent.com/dbeinhauer/bcs-thesis/main/text/errata.pdf)
+[.pdf here](https://raw.githubusercontent.com/dbeinhauer/bcs-thesis/main/text/tex_errata/thesis.pdf)
 or online 
-[through github](https://github.com/dbeinhauer/bcs-thesis/blob/main/text/errata.pdf)
+[through github](https://github.com/dbeinhauer/bcs-thesis/blob/main/text/tex_errata/thesis.pdf)
 * For download **poster** as 
 [.pdf here](https://raw.githubusercontent.com/dbeinhauer/bcs-thesis/main/poster/drawing.pdf)
 or online 
