@@ -1,1 +1,1 @@
-Poster for the defence of my bachlors thesis.
+Poster for the defence of my bachlor thesis.
